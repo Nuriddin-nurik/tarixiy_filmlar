@@ -14,10 +14,9 @@ class MyApp extends StatelessWidget {
 
       builder: (context, child) {
         return MaterialApp(
-          title: 'Flutter Demo',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          ),
+          debugShowCheckedModeBanner: false,
+          title: 'Tarixiy Filmlar',
+          theme: ThemeData(primarySwatch: Colors.blue),
           home: Home(),
         );
       },
