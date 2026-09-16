@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -19,12 +22,22 @@ class _HomeState extends State<Home> {
   var images = [
     "https://www.screenhub.com.au/wp-content/uploads/sites/4/2026/07/moana-2026-film-review.jpg",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEsruTcootpfsrQOVQsDKGZhEcHmVQDmbTQZnNu7PFQ_M8JCuolq73l6vq&s=10",
-    "https://www.screenhub.com.au/wp-content/uploads/sites/4/2026/07/moana-2026-film-review.jpg",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS3oER-iLAjHKaUv8KKZy39vnLoPamIjw7nc8QK6OBfIQ&s=10",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcIRMU6Kg_ouzdyp8C44ljzcxDeHvbPBDsDquSUX6BJA&s=10",
+
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSkEkXRjFD01NefNeh4PJcUhiFfPaSXOptveZ4Bn9Jx8A_ICRsL6KTf8XI&s=10",
+
+    "https://disney.images.edge.bamgrid.com/ripcut-delivery/v2/variant/disney/019d224e-e281-7e6e-b13d-32cc07dc4a69/compose?format=webp&width=467",
+
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmqsg6O0B8M9pNxPFv-peuY_lgNFt_bElpMJxj24eveA&s=10",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRivzz74Cxiltke0mIra4IM4Jp-HkrmAomGW5TS3x-BC5i1wqPiM_25x7k&s=10",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ02S4p7cL3EQKZcMqLFMMxJgTmoMzJoI8y2V8uITcKXJ5bTI6tLSR6VR8&s=10",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRe9LsuduYgDZDhzbOTPCxAuzEbyJrhnKdim_7-dLraVi17u27FykB55oc&s=10",
   ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 36, 44, 52),
+      backgroundColor: Color(0xFF0b0d0e),
       body: SizedBox.expand(
         child: Stack(
           children: [
@@ -46,14 +59,18 @@ class _HomeState extends State<Home> {
                   ///
                   Padding(
                     padding: EdgeInsets.only(left: 16.w, right: 6.w),
-                    child: rowText("eldorbek", "Barchasini ko'rish"),
+                    child: rowText(
+                      "Ko‘rishni davom etish",
+                      "Barchasini ko'rish",
+                    ),
                   ),
                   SizedBox(height: 15.h),
 
                   ///
                   /// davom eting widget
                   SizedBox(
-                    height: 150.h,
+                    height: 143.h,
+
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
@@ -61,32 +78,36 @@ class _HomeState extends State<Home> {
                       itemCount: images.length,
 
                       itemBuilder: (BuildContext context, int index) {
-                        return Row(
-                          children: [
-                            Column(
-                              children: [
-                                appContainer(
-                                  height: 80.h,
-                                  width: 180.w,
-                                  child: Image.network(
-                                    images[index],
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                appText("Adolat yo'lida", fontSize: 13),
-                                appText(
-                                  "Usmonli • 1-mavsum, 48-qism",
-                                  fontSize: 11,
-                                  color: Color.fromRGBO(156, 163, 175, 1),
-                                ),
-                              ],
-                            ),
-                            index != images.length - 1
-                                ? SizedBox(width: 10.w)
-                                : SizedBox.shrink(),
-                          ],
+                        /// height width qo'shish kerak
+                        return itemBuilder(
+                          images[index],
+                          "title",
+                          "dis",
+                          index,
                         );
                       },
+                    ),
+                  ),
+
+                  // TARIXIY janglar
+                  SizedBox(height: 28.h),
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: 16.w,
+                      right: 6.w,
+                      bottom: 4.h,
+                    ),
+                    child: rowText("Tarixiy janglar", "Barchasini ko'rish"),
+                  ),
+                  appContainer(
+                    alignment: Alignment.centerLeft,
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+
+                    child: appText(
+                      "Shiddatli janglar va qahramonlik dostonlari",
+                      color: Color(0xff9CA3AF),
+                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -123,10 +144,81 @@ class _HomeState extends State<Home> {
     );
   }
 
+  Widget itemBuilder(String image, String title, String dis, int index) {
+    return Row(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10.r),
+              child: appContainer(
+                height: 102,
+                width: 180,
+                child: Stack(
+                  alignment: Alignment(0, 0),
+                  children: [
+                    Positioned.fill(
+                      child: CachedNetworkImage(
+                        imageUrl: image,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.yellow,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      child: appContainer(
+                        height: 3,
+                        width: 180,
+                        color: Colors.white.withValues(alpha: .2),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      child: appContainer(
+                        height: 3,
+                        width: 180,
+
+                        gradient: LinearGradient(
+                          colors: [Color(0xffD4AF37), Colors.transparent],
+                          stops: [Random().nextDouble(), 0.0],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 2),
+              child: appText(
+                title,
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            appText(
+              dis,
+              fontSize: 11,
+              color: Color.fromRGBO(156, 163, 175, 1),
+              fontWeight: FontWeight.w400,
+            ),
+          ],
+        ),
+        index != images.length - 1 ? SizedBox(width: 10.w) : SizedBox.shrink(),
+      ],
+    );
+  }
+
   Widget appText(
     String text, {
-    double fontSize = 15,
-    Color color = Colors.white,
+    double? fontSize,
+    Color? color,
     FontWeight fontWeight = FontWeight.w500,
     TextAlign textAlign = TextAlign.start,
   }) {
@@ -135,28 +227,35 @@ class _HomeState extends State<Home> {
       textAlign: textAlign,
       style: TextStyle(
         color: color,
-        fontSize: fontSize.sp,
+        fontSize: fontSize?.sp,
         fontWeight: fontWeight,
       ),
     );
   }
 
   Widget appContainer({
-    required Widget child,
-    double width = 180,
-    double height = 143,
-    double radius = 15,
-    Color color = Colors.white,
+    Widget? child,
+    double? width,
+    double? height,
+    EdgeInsetsGeometry? padding,
+    double? radius,
+    AlignmentGeometry? alignment,
+    Gradient? gradient,
+    Color? color,
     EdgeInsetsGeometry margin = EdgeInsets.zero,
   }) {
     return Container(
-      width: width.w,
-      height: height.h,
+      width: width?.w,
+      alignment: alignment,
+      height: height?.h,
       margin: margin,
+      padding: padding,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(radius.r),
+
+        borderRadius: BorderRadius.circular(radius?.r ?? 0),
+        gradient: gradient,
       ),
       child: child,
     );
@@ -165,22 +264,28 @@ class _HomeState extends State<Home> {
   Widget rowText(String text1, String text2) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
       children: [
         appText(text1, color: Colors.white),
 
-        TextButton(
-          onPressed: () {},
-          style: ButtonStyle(
-            overlayColor: WidgetStateProperty.all(
-              Colors.white.withValues(alpha: .1),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {},
+            child: Padding(
+              padding: const EdgeInsets.all(5.0),
+              child: Row(
+                children: [
+                  appText(text2, color: Colors.yellow),
+                  SizedBox(width: 5.w),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.yellow,
+                    size: 12.sp,
+                  ),
+                ],
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              appText(text2, color: Colors.yellow),
-              SizedBox(width: 5.w),
-              Icon(Icons.arrow_forward_ios, color: Colors.yellow, size: 12.sp),
-            ],
           ),
         ),
       ],
@@ -194,7 +299,14 @@ class _HomeState extends State<Home> {
       color: Colors.blue,
       child: Stack(
         children: [
-          Image.network(images, height: 380.h, width: 1.sw, fit: BoxFit.cover),
+          CachedNetworkImage(
+            imageUrl: images,
+            height: 380.h,
+            width: 1.sw,
+            fit: BoxFit.cover,
+            placeholder: (context, url) =>
+                Center(child: CircularProgressIndicator(color: Colors.yellow)),
+          ),
 
           Container(
             height: 380.h,

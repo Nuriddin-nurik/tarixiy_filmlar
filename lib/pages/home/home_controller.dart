@@ -20,7 +20,6 @@ class HomeController extends GetxController {
 
   corouselRun(PageController pageController, int maxItem) {
     timer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      print("max = $maxItem cur =  ${pageController.page?.toInt()}");
       if (maxItem - 1 == pageController.page?.toInt()) {
         pageController.animateToPage(
           0,
