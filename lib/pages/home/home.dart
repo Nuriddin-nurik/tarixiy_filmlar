@@ -1,8 +1,11 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:tarixiy_filimlar/widget/short_widgets.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -12,6 +15,31 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  var pageCon = PageController();
+  var movieTitles = [
+    "Gladiator",
+    "Braveheart",
+    "Troy",
+    "The Last Samurai",
+    "Kingdom of Heaven",
+    "Dunkirk",
+    "Schindler's List",
+    "The Patriot",
+    "the Horror House",
+    "Oppenheimer",
+  ];
+  var movieDis = [
+    "Rim imperiyasida qasos va sharaf uchun kurash.",
+    "Shotlandiya ozodligi uchun boshlangan buyuk jang.",
+    "Troya urushi va afsonaviy qahramonlar haqida.",
+    "Samuraylar an'anasi va yangi davr to'qnashuvi.",
+    "Salib yurishlari davridagi Quddus himoyasi.",
+    "Ikkinchi jahon urushidagi qutqaruv operatsiyasi.",
+    "Urush davrida insonlarni qutqarishga bag'ishlangan hayot.",
+    "Amerika mustaqilligi uchun kurashgan vatanparvar haqida.",
+    "Termopil jangida jasorat ko'rsatgan spartaliklar.",
+    "Atom bombasini yaratgan olimning murakkab taqdiri.",
+  ];
   var img1 =
       "https://www.screenhub.com.au/wp-content/uploads/sites/4/2026/07/moana-2026-film-review.jpg";
   var img2 =
@@ -36,6 +64,8 @@ class _HomeState extends State<Home> {
   ];
   @override
   Widget build(BuildContext context) {
+    var sb = MediaQuery.of(context).viewPadding.top;
+
     return Scaffold(
       backgroundColor: Color(0xFF0b0d0e),
       body: SizedBox.expand(
@@ -44,14 +74,42 @@ class _HomeState extends State<Home> {
             SingleChildScrollView(
               child: Column(
                 children: [
-                  SizedBox(
-                    height: 380.h,
-                    width: 1.sw,
-                    child: PageView.builder(
-                      itemCount: images.length,
-                      itemBuilder: (context, index) => pageItem(images[index]),
-                      physics: const PageScrollPhysics(),
-                    ),
+                  SizedBox(height: 64.h + sb),
+                  Stack(
+                    children: [
+                      SizedBox(
+                        height: 380.h,
+                        width: 1.sw,
+                        child: PageView.builder(
+                          controller: pageCon,
+                          itemCount: images.length,
+                          itemBuilder: (context, index) =>
+                              pageItem(images[index]),
+                          physics: const PageScrollPhysics(),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 12.h,
+                        left: 0,
+                        right: 0,
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: SmoothPageIndicator(
+                            controller: pageCon,
+                            count: images.length,
+
+                            axisDirection: Axis.horizontal,
+                            effect: ExpandingDotsEffect(
+                              dotWidth: 8.w,
+                              dotHeight: 8.w,
+                              expansionFactor: 4,
+                              dotColor: Colors.grey,
+                              activeDotColor: Colors.indigo,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   // image
                   SizedBox(height: 8.h),
@@ -81,9 +139,11 @@ class _HomeState extends State<Home> {
                         /// height width qo'shish kerak
                         return itemBuilder(
                           images[index],
-                          "title",
-                          "dis",
+                          movieTitles[index],
+                          movieDis[index],
                           index,
+                          isProgress: true,
+                          width: 180,
                         );
                       },
                     ),
@@ -99,15 +159,42 @@ class _HomeState extends State<Home> {
                     ),
                     child: rowText("Tarixiy janglar", "Barchasini ko'rish"),
                   ),
-                  appContainer(
+                  ContainerX(
                     alignment: Alignment.centerLeft,
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
 
-                    child: appText(
-                      "Shiddatli janglar va qahramonlik dostonlari",
+                    child: TextX(
+                      text: "Shiddatli janglar va qahramonlik dostonlari",
                       color: Color(0xff9CA3AF),
                       fontWeight: FontWeight.w400,
                       fontSize: 12,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+
+                  SizedBox(
+                    height: 193.h,
+
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      itemCount: images.length,
+
+                      itemBuilder: (BuildContext context, int index) {
+                        /// height width qo'shish kerak
+                        return itemBuilder(
+                          images[index],
+                          movieTitles[index],
+                          movieDis[index],
+                          index,
+                          height: 154,
+                          width: 110,
+                          tWidth: 12,
+                          dWidth: 10,
+                          isProgress: false,
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -119,145 +206,142 @@ class _HomeState extends State<Home> {
               top: 0,
               left: 0,
               right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Image.asset("assets/logo.png", height: 48.h, width: 120.w),
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () {},
-                        icon: Icon(Icons.search, color: Colors.white),
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: Icon(Icons.notifications, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget itemBuilder(String image, String title, String dis, int index) {
-    return Row(
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10.r),
-              child: appContainer(
-                height: 102,
-                width: 180,
-                child: Stack(
-                  alignment: Alignment(0, 0),
-                  children: [
-                    Positioned.fill(
-                      child: CachedNetworkImage(
-                        imageUrl: image,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.yellow,
+              child: ClipRRect(
+                child: SizedBox(
+                  width: 1.sw,
+                  height: 64.h,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: ContainerX(
+                      color: Colors.black.withValues(alpha: .4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Image.asset(
+                            "assets/logo.png",
+                            height: 64.h,
+                            width: 120.w,
                           ),
-                        ),
+                          Row(
+                            children: [
+                              IconButton(
+                                onPressed: () {},
+                                icon: Icon(Icons.search, color: Colors.white),
+                              ),
+                              IconButton(
+                                onPressed: () {},
+                                icon: Icon(
+                                  Icons.notifications,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    Positioned(
-                      bottom: 0,
-                      child: appContainer(
-                        height: 3,
-                        width: 180,
-                        color: Colors.white.withValues(alpha: .2),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      child: appContainer(
-                        height: 3,
-                        width: 180,
-
-                        gradient: LinearGradient(
-                          colors: [Color(0xffD4AF37), Colors.transparent],
-                          stops: [Random().nextDouble(), 0.0],
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 2),
-              child: appText(
-                title,
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            appText(
-              dis,
-              fontSize: 11,
-              color: Color.fromRGBO(156, 163, 175, 1),
-              fontWeight: FontWeight.w400,
-            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget itemBuilder(
+    String image,
+    String title,
+    String dis,
+    int index, {
+    double? tWidth,
+    double? dWidth,
+    double? width,
+    double? height,
+    // double? imgWidth,
+    // double? imgHeight,
+    bool isProgress = false,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: width,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10.r),
+                child: ContainerX(
+                  height: height ?? 102,
+                  width: width ?? 180,
+                  child: Stack(
+                    alignment: Alignment(0, 0),
+                    children: [
+                      Positioned.fill(
+                        child: CachedNetworkImage(
+                          imageUrl: image,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.yellow,
+                            ),
+                          ),
+                        ),
+                      ),
+                      isProgress
+                          ? Positioned(
+                              bottom: 0,
+                              child: ContainerX(
+                                height: 3,
+                                width: 180,
+                                color: Colors.white.withValues(alpha: .2),
+                              ),
+                            )
+                          : SizedBox.shrink(),
+                      isProgress
+                          ? Positioned(
+                              bottom: 0,
+                              child: ContainerX(
+                                height: 3,
+                                width: 180,
+
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xffD4AF37),
+                                    Colors.transparent,
+                                  ],
+                                  stops: [Random().nextDouble(), 0.0],
+                                ),
+                              ),
+                            )
+                          : SizedBox.shrink(),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 2),
+                child: TextX(
+                  text: title,
+                  color: Colors.white,
+                  fontSize: tWidth ?? 13,
+                  fontWeight: FontWeight.w600,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              TextX(
+                text: dis,
+                fontSize: dWidth ?? 11,
+                color: Color.fromRGBO(156, 163, 175, 1),
+                fontWeight: FontWeight.w400,
+              ),
+            ],
+          ),
         ),
         index != images.length - 1 ? SizedBox(width: 10.w) : SizedBox.shrink(),
       ],
-    );
-  }
-
-  Widget appText(
-    String text, {
-    double? fontSize,
-    Color? color,
-    FontWeight fontWeight = FontWeight.w500,
-    TextAlign textAlign = TextAlign.start,
-  }) {
-    return Text(
-      text,
-      textAlign: textAlign,
-      style: TextStyle(
-        color: color,
-        fontSize: fontSize?.sp,
-        fontWeight: fontWeight,
-      ),
-    );
-  }
-
-  Widget appContainer({
-    Widget? child,
-    double? width,
-    double? height,
-    EdgeInsetsGeometry? padding,
-    double? radius,
-    AlignmentGeometry? alignment,
-    Gradient? gradient,
-    Color? color,
-    EdgeInsetsGeometry margin = EdgeInsets.zero,
-  }) {
-    return Container(
-      width: width?.w,
-      alignment: alignment,
-      height: height?.h,
-      margin: margin,
-      padding: padding,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: color,
-
-        borderRadius: BorderRadius.circular(radius?.r ?? 0),
-        gradient: gradient,
-      ),
-      child: child,
     );
   }
 
@@ -266,7 +350,7 @@ class _HomeState extends State<Home> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
       children: [
-        appText(text1, color: Colors.white),
+        TextX(text: text1, color: Colors.white),
 
         Material(
           color: Colors.transparent,
@@ -276,7 +360,7 @@ class _HomeState extends State<Home> {
               padding: const EdgeInsets.all(5.0),
               child: Row(
                 children: [
-                  appText(text2, color: Colors.yellow),
+                  TextX(text: text2, color: Colors.yellow),
                   SizedBox(width: 5.w),
                   Icon(
                     Icons.arrow_forward_ios,
