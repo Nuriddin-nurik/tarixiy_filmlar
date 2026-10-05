@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -95,6 +96,7 @@ class PlayerController extends GetxController {
     _completedSub = player.stream.completed.listen((done) {
       if (done) _playNext();
     });
+    _bufferingSub = player.stream.buffering.listen(_onBuffering);
   }
 
   StreamSubscription<bool>? _completedSub;
@@ -175,14 +177,22 @@ class PlayerController extends GetxController {
     final isOffline = offlineUrl != null;
 
     String url = offlineUrl ?? episode.videoUrl!;
+    playingHeight.value = 0;
     if (!isOffline) {
       // Sifatlar ro'yxatini olamiz va avval tanlangan sifat bo'lsa, o'shani ochamiz.
       qualities.value = await _loadQualities(episode.videoUrl!);
       final preferred = await _preferredHeight();
       final match = qualities.firstWhereOrNull((q) => q.height == preferred);
       selectedQuality.value = match?.height ?? 0;
-      if (match != null) url = match.url;
+      // "Avto": internet turiga qarab boshlang'ich sifatni o'zimiz tanlaymiz
+      // (mpv o'zi har doim eng yuqori sifatni oladi va pasaytirmaydi).
+      final chosen = match ?? await _autoQuality();
+      if (chosen != null) {
+        url = chosen.url;
+        playingHeight.value = chosen.height;
+      }
     }
+    _stalls.clear();
 
     final resumeAt = fromStart ? 0 : (episode.watchedSeconds ?? 0);
     await _openAt(url, Duration(seconds: resumeAt > 5 ? resumeAt : 0));
@@ -208,6 +218,9 @@ class PlayerController extends GetxController {
 
   static const _qualityPrefsKey = 'video_quality';
 
+  /// Hozir aslida ijro etilayotgan sifat (Avto rejimida ham). 0 = noma'lum/oflayn.
+  var playingHeight = 0.obs;
+
   Future<void> changeQuality(int height) async {
     final ep = currentEpisode.value;
     if (ep?.videoUrl == null || height == selectedQuality.value) return;
@@ -215,11 +228,72 @@ class PlayerController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_qualityPrefsKey, height);
 
-    final url = height == 0
-        ? ep!.videoUrl!
-        : qualities.firstWhere((q) => q.height == height).url;
+    final chosen = height == 0
+        ? await _autoQuality()
+        : qualities.firstWhereOrNull((q) => q.height == height);
+    if (chosen == null) return;
+    playingHeight.value = chosen.height;
+    _stalls.clear();
     // Joriy joydan davom ettiramiz.
-    await _openAt(url, player.state.position);
+    await _openAt(chosen.url, player.state.position);
+  }
+
+  /// Avto rejimda boshlang'ich sifat: Wi-Fi'da eng yuqorisi (720p gacha),
+  /// mobil internetda 480p atrofi — tez-tez to'xtab yuklanmasligi uchun.
+  Future<VideoQuality?> _autoQuality() async {
+    if (qualities.isEmpty) return null;
+    final net = await Connectivity().checkConnectivity();
+    final wifi = net.contains(ConnectivityResult.wifi) || net.contains(ConnectivityResult.ethernet);
+    final limit = wifi ? 720 : 480;
+    // qualities balanddan pastga tartiblangan.
+    return qualities.firstWhereOrNull((q) => q.height <= limit) ?? qualities.last;
+  }
+
+  // ───────────── Sekin internetda sifatni avtomatik pasaytirish ─────────────
+
+  final _stalls = <DateTime>[];
+  Timer? _stallTimer;
+  bool _switching = false;
+  StreamSubscription<bool>? _bufferingSub;
+
+  void _onBuffering(bool buffering) {
+    if (!buffering) {
+      _stallTimer?.cancel();
+      return;
+    }
+    // Faqat Avto rejimda, video boshlanganidan keyin (dastlabki yuklanish hisobga olinmaydi).
+    if (selectedQuality.value != 0 || _switching || playingHeight.value == 0) return;
+    if (player.state.position < const Duration(seconds: 3)) return;
+    // Ochilish/sakrashdan keyingi 8 soniyadagi yuklanish normal holat.
+    if (DateTime.now().difference(_openedAt) < const Duration(seconds: 8)) return;
+
+    final now = DateTime.now();
+    _stalls
+      ..add(now)
+      ..removeWhere((t) => now.difference(t) > const Duration(seconds: 60));
+    // 1 daqiqada 3 marta to'xtasa yoki bir marta 5 soniyadan ko'p yuklansa — pasaytiramiz.
+    if (_stalls.length >= 3) {
+      _downgrade();
+    } else {
+      _stallTimer?.cancel();
+      _stallTimer = Timer(const Duration(seconds: 5), _downgrade);
+    }
+  }
+
+  Future<void> _downgrade() async {
+    _stallTimer?.cancel();
+    final lower = qualities.firstWhereOrNull((q) => q.height < playingHeight.value);
+    if (lower == null || _switching) return;
+    _switching = true;
+    _stalls.clear();
+    playingHeight.value = lower.height;
+    appSnack('Internet sekin'.tr, 'Sifat @q ga tushirildi'.trParams({'q': lower.label}),
+        duration: const Duration(seconds: 2));
+    try {
+      await _openAt(lower.url, player.state.position);
+    } finally {
+      _switching = false;
+    }
   }
 
   Future<int> _preferredHeight() async {
@@ -242,8 +316,12 @@ class PlayerController extends GetxController {
   /// HLS da `Media.start` ishlamaydi, stream xabarini kutish esa ishonchsiz (xabar
   /// open() tugaguncha o'tib ketadi). Shuning uchun player holatini so'rab turamiz:
   /// video yuklanib, davomiyligi ma'lum bo'lgach seek qilamiz va natijani tekshiramiz.
+  /// Video ochilayotgan/sakrayotgan payt — bu vaqtdagi yuklanish "to'xtash" hisoblanmaydi.
+  DateTime _openedAt = DateTime.fromMillisecondsSinceEpoch(0);
+
   Future<void> _openAt(String url, Duration position) async {
     final token = ++_openToken;
+    _openedAt = DateTime.now();
     await player.open(Media(url), play: true);
     if (position <= Duration.zero) return;
 
@@ -253,6 +331,7 @@ class PlayerController extends GetxController {
       final s = player.state;
       if (s.duration > Duration.zero && !s.buffering) {
         await player.seek(position);
+        _openedAt = DateTime.now();
         await Future.delayed(const Duration(milliseconds: 400));
         // Seek qabul qilinganini tekshiramiz, bo'lmasa yana urinamiz.
         if ((player.state.position - position).inSeconds.abs() <= 5) return;
@@ -276,6 +355,8 @@ class PlayerController extends GetxController {
   void onClose() {
     _progressTimer?.cancel();
     _completedSub?.cancel();
+    _bufferingSub?.cancel();
+    _stallTimer?.cancel();
     _saveProgress();
     player.dispose();
     super.onClose();

@@ -209,12 +209,15 @@ class PlayerView extends GetView<PlayerController> {
     Widget option(int height, String label, {String? hint}) {
       return Obx(() {
         final selected = controller.selectedQuality.value == height;
+        // Avto rejimda hozir qaysi sifat ishlayotganini ham ko'rsatamiz: "Avto (480p)".
+        final playing = controller.playingHeight.value;
+        final title = height == 0 && selected && playing > 0 ? '$label (${playing}p)' : label;
         return ListTile(
           onTap: () {
             Get.back();
             controller.changeQuality(height);
           },
-          title: Text(label, style: TextStyle(color: Colors.white, fontSize: 15.sp)),
+          title: Text(title, style: TextStyle(color: Colors.white, fontSize: 15.sp)),
           subtitle: hint == null
               ? null
               : Text(hint, style: TextStyle(color: AppColors.textSecondary, fontSize: 11.sp)),

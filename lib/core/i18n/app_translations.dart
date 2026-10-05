@@ -89,6 +89,8 @@ const Map<String, String> _ru = {
   "Video sifati": "Качество видео",
   "Bu video uchun sifat tanlab bo'lmaydi": "Для этого видео нельзя выбрать качество",
   "Avto": "Авто",
+  "Internet sekin": "Медленный интернет",
+  "Sifat @q ga tushirildi": "Качество снижено до @q",
   "Internet tezligiga qarab avtomatik": "Автоматически по скорости интернета",
   "@h soat @m daq": "@h ч @m мин",
   "@m daq": "@m мин",
