@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -10,8 +12,21 @@ import '../controllers/player_controller.dart';
 import '../controllers/download_controller.dart';
 import '../widgets/download_button.dart';
 
+/// Pleyer — Figma: "04 Epizodlar" (node 2:227). Bu ekran Noto Serif shriftida.
+/// Dizayndagi "Dublyaj", Cast tugmasi va layk/ko'rishlar soni qo'yilmagan: ma'lumoti yo'q.
 class PlayerView extends GetView<PlayerController> {
   const PlayerView({super.key});
+
+  static TextStyle _t(double size, FontWeight w, Color c, {double? height, double? spacing}) => TextStyle(
+        fontFamily: AppFonts.notoSerif,
+        fontSize: size.sp,
+        fontWeight: w,
+        color: c,
+        height: height,
+        letterSpacing: spacing,
+      );
+
+  static const _muted = Color(0xFF9CA3AF);
 
   @override
   Widget build(BuildContext context) {
@@ -30,122 +45,144 @@ class PlayerView extends GetView<PlayerController> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.playerBg,
       body: SafeArea(
         child: Column(
           children: [
-            // 1. VIDEO PLEYER
-            AspectRatio(aspectRatio: 16 / 9, child: video),
+            // 1. VIDEO PLEYER (16:9)
+            AspectRatio(aspectRatio: 16 / 9, child: ColoredBox(color: Colors.black, child: video)),
 
             // 2. TAFSILOTLAR VA QISMLAR
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.green));
+                  return const Center(child: CircularProgressIndicator(color: AppColors.playerAccent));
                 }
 
                 final current = controller.currentEpisode.value;
-                final list = controller.visibleEpisodes;
+                final list = controller.visibleEpisodes
+                    .where((e) => controller.currentTabIndex.value != 2 || downloadController.isComplete(e.id!))
+                    .toList();
                 final seasons = controller.seasons;
 
                 return ListView(
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  padding: EdgeInsets.only(bottom: 24.h),
                   children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    // Figma: "Meta" paneli.
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.playerPanel,
+                        border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+                      ),
+                      padding: EdgeInsets.all(16.w),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (current != null)
                             Text(
-                              '@s-FASL • @e-QISM'.trParams({'s': '${current.seasonNumber ?? 1}', 'e': '${current.episodeNumber ?? ''}'}),
-                              style: TextStyle(
-                                color: AppColors.greenLight,
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1,
-                              ),
+                              '@s-FASL • @e-QISM'.trParams(
+                                  {'s': '${current.seasonNumber ?? 1}', 'e': '${current.episodeNumber ?? ''}'}),
+                              style: _t(11, FontWeight.w700, AppColors.playerAccentText, height: 1.5, spacing: 0.55),
                             ),
-                          SizedBox(height: 4.h),
+                          SizedBox(height: 2.h),
                           Text(
                             controller.seriesTitle.value.isNotEmpty
                                 ? controller.seriesTitle.value
                                 : (current?.title ?? ''),
-                            style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold),
+                            style: _t(16, FontWeight.w700, Colors.white, height: 22 / 16),
                           ),
                           if (current?.title != null && controller.seriesTitle.value.isNotEmpty) ...[
                             SizedBox(height: 2.h),
-                            Text(current!.title!,
-                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp)),
+                            Text(current!.title!, style: _t(12, FontWeight.w400, _muted, height: 16 / 12)),
+                          ],
+
+                          // Figma: "Quick actions" — joriy qismni yuklab olish.
+                          if (current != null && current.canWatch && current.videoUrl != 'offline') ...[
+                            SizedBox(height: 14.h),
+                            Container(
+                              padding: EdgeInsets.symmetric(vertical: 4.h),
+                              decoration: BoxDecoration(
+                                border: Border.symmetric(
+                                    horizontal: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+                              ),
+                              child: DownloadButton(
+                                episode: current,
+                                seriesId: controller.currentSeriesId.value,
+                                seriesTitle: controller.seriesTitle.value,
+                                wide: true,
+                              ),
+                            ),
+                          ],
+
+                          // Figma: "Season selector".
+                          if (seasons.length > 1) ...[
+                            SizedBox(height: 14.h),
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: Text('Faslni tanlang:'.tr,
+                                        style: _t(12, FontWeight.w500, _muted, height: 16 / 12))),
+                                if (current != null)
+                                  Text('@s-fasl (Hozirgi)'.trParams({'s': '${current.seasonNumber ?? 1}'}),
+                                      style: _t(11, FontWeight.w500, AppColors.playerAccentText, height: 1.5)),
+                              ],
+                            ),
+                            SizedBox(height: 6.h),
+                            SizedBox(
+                              height: 36.h,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                padding: EdgeInsets.symmetric(vertical: 4.h),
+                                itemCount: seasons.length,
+                                separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                                itemBuilder: (_, i) => _seasonChip(seasons[i]),
+                              ),
+                            ),
                           ],
                         ],
                       ),
                     ),
-                    SizedBox(height: 16.h),
 
-                    // Fasllar
-                    if (seasons.length > 1) ...[
-                      SizedBox(
-                        height: 34.h,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          itemCount: seasons.length,
-                          separatorBuilder: (_, __) => SizedBox(width: 8.w),
-                          itemBuilder: (_, i) {
-                            final s = seasons[i];
-                            final selected = controller.selectedSeason.value == s;
-                            return ChoiceChip(
-                              label: Text('@s-fasl'.trParams({'s': '$s'})),
-                              selected: selected,
-                              onSelected: (_) => controller.selectedSeason.value = s,
-                              showCheckmark: false,
-                              backgroundColor: AppColors.surface,
-                              selectedColor: AppColors.green,
-                              side: BorderSide(color: selected ? AppColors.green : AppColors.border),
-                              labelStyle: TextStyle(
-                                color: selected ? Colors.white : AppColors.textSecondary,
-                                fontSize: 12.sp,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(height: 12.h),
-                    ],
-
-                    // Tablar
-                    Padding(
+                    // Figma: "Tabs".
+                    Container(
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.playerBg.withValues(alpha: 0.95),
+                        border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+                      ),
                       child: Row(
                         children: [
-                          _buildTab(0, 'Barcha qism'),
-                          SizedBox(width: 20.w),
+                          _buildTab(0, 'Barcha qism', count: controller.visibleEpisodesCount),
                           _buildTab(1, "Ko'rilganlar"),
-                          SizedBox(width: 20.w),
                           _buildTab(2, 'Yuklanganlar'),
                         ],
                       ),
                     ),
-                    Divider(color: AppColors.border, height: 1.h),
-                    SizedBox(height: 8.h),
 
+                    // Figma: "EpisodeList".
                     if (list.isEmpty)
                       Padding(
                         padding: EdgeInsets.all(32.w),
                         child: Text(
                           controller.currentTabIndex.value == 2
-                              ? "Yuklangan qismlar yo'q"
-                              : "Bu yerda hozircha qism yo'q",
+                              ? "Yuklangan qismlar yo'q".tr
+                              : "Bu yerda hozircha qism yo'q".tr,
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
+                          style: _t(13, FontWeight.w400, _muted),
                         ),
                       )
                     else
-                      ...list
-                          .where((e) => controller.currentTabIndex.value != 2 ||
-                              downloadController.isComplete(e.id!))
-                          .map((e) => _episodeTile(e, current?.id == e.id)),
+                      Padding(
+                        padding: EdgeInsets.all(16.w),
+                        child: Column(
+                          children: [
+                            for (final e in list) ...[
+                              _episodeTile(e, current?.id == e.id),
+                              SizedBox(height: 12.h),
+                            ],
+                          ],
+                        ),
+                      ),
                   ],
                 );
               }),
@@ -156,10 +193,70 @@ class PlayerView extends GetView<PlayerController> {
     );
   }
 
+  Widget _seasonChip(int s) {
+    final selected = controller.selectedSeason.value == s;
+    return GestureDetector(
+      onTap: () => controller.selectedSeason.value = s,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: selected ? 16.w : 14.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.playerGreen : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: selected
+              ? [BoxShadow(color: const Color(0xFF064E3B).withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 4))]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('@s-fasl'.trParams({'s': '$s'}),
+                style: _t(12, selected ? FontWeight.w700 : FontWeight.w500, selected ? Colors.white : _muted,
+                    height: 16 / 12)),
+            if (selected) ...[SizedBox(width: 4.w), AppIcon('season_check', size: 12.w)],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Figma: video ustidagi boshqaruvlar (yumaloq tugmalar, yashil "Ijro" tugmasi, 6px progress).
   MaterialVideoControlsThemeData _controlsTheme({required bool fullscreen}) {
+    Widget circle(double size, Color color, Widget child, {Border? border, List<BoxShadow>? shadow}) => ClipOval(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: Container(
+              width: size,
+              height: size,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: border, boxShadow: shadow),
+              child: child,
+            ),
+          ),
+        );
+
+    Widget seekIcon(String icon) => circle(
+          40,
+          Colors.black.withValues(alpha: 0.5),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              AppIcon(icon, size: 22),
+              Padding(
+                padding: const EdgeInsets.only(top: 1),
+                child: Text('10', style: TextStyle(fontFamily: AppFonts.notoSerif, fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white, height: 1.25)),
+              ),
+            ],
+          ),
+        );
+
     return MaterialVideoControlsThemeData(
-      seekBarPositionColor: AppColors.green,
-      seekBarThumbColor: AppColors.green,
+      // Figma: progress 6px, oq 20% fon, #10B981 to'ldirish.
+      seekBarHeight: 6,
+      seekBarColor: Colors.white.withValues(alpha: 0.2),
+      seekBarPositionColor: AppColors.playerAccent,
+      seekBarThumbColor: AppColors.playerAccent,
+      seekBarBufferColor: Colors.white.withValues(alpha: 0.3),
+      seekBarMargin: const EdgeInsets.symmetric(horizontal: 14),
       // Boshqaruvlar tez yashirinsa, media_kit seek bar'ni surish paytida o'chirib yuboradi
       // ("widget has been unmounted" xatosi). Shuning uchun yashirinish vaqtini uzaytiramiz.
       controlsHoverDuration: const Duration(seconds: 5),
@@ -167,40 +264,67 @@ class PlayerView extends GetView<PlayerController> {
       seekOnDoubleTap: true,
       seekOnDoubleTapBackwardDuration: const Duration(seconds: 10),
       seekOnDoubleTapForwardDuration: const Duration(seconds: 10),
+      topButtonBarMargin: const EdgeInsets.symmetric(horizontal: 14),
       topButtonBar: [
         if (!fullscreen)
           MaterialCustomButton(
-            icon: const Icon(Icons.arrow_back_ios_new),
-            iconSize: 20,
+            icon: circle(36, Colors.black.withValues(alpha: 0.4), const AppIcon('player_back', size: 20)),
+            iconSize: 36,
             onPressed: Get.back,
           ),
         const Spacer(),
         MaterialCustomButton(
-          icon: const Icon(Icons.settings_outlined),
+          icon: circle(36, Colors.black.withValues(alpha: 0.4), const AppIcon('player_more', size: 18)),
+          iconSize: 36,
           onPressed: _showQualitySheet,
         ),
       ],
       primaryButtonBar: [
-        const Spacer(flex: 2),
+        const Spacer(),
         MaterialCustomButton(
-          icon: const Icon(Icons.replay_10_rounded),
-          iconSize: 36,
+          icon: seekIcon('player_rewind'),
+          iconSize: 40,
           onPressed: () => controller.seekBy(-10),
         ),
-        const Spacer(),
-        const MaterialPlayOrPauseButton(iconSize: 52),
-        const Spacer(),
+        const SizedBox(width: 32),
+        // Figma: "Btn / Ijro" — 56px yashil doira.
+        _PlayPauseButton(player: controller),
+        const SizedBox(width: 32),
         MaterialCustomButton(
-          icon: const Icon(Icons.forward_10_rounded),
-          iconSize: 36,
+          icon: seekIcon('player_forward'),
+          iconSize: 40,
           onPressed: () => controller.seekBy(10),
         ),
-        const Spacer(flex: 2),
+        const Spacer(),
       ],
-      bottomButtonBar: const [
-        MaterialPositionIndicator(),
-        Spacer(),
-        MaterialFullscreenButton(),
+      bottomButtonBarMargin: const EdgeInsets.only(left: 16, right: 8),
+      bottomButtonBar: [
+        MaterialPositionIndicator(
+          style: TextStyle(fontFamily: AppFonts.notoSerif, fontSize: 11, color: const Color(0xFFD1D5DB), height: 1.5),
+        ),
+        const Spacer(),
+        // Figma: "Badge / 1080p" — hozirgi sifat.
+        Obx(() {
+          final h = controller.playingHeight.value;
+          if (h == 0) return const SizedBox.shrink();
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            decoration: BoxDecoration(
+              color: AppColors.playerAccent.withValues(alpha: 0.3),
+              border: Border.all(color: AppColors.playerAccent.withValues(alpha: 0.4)),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text('${h}P',
+                style: TextStyle(
+                    fontFamily: AppFonts.notoSerif,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.playerAccentText,
+                    letterSpacing: 0.45,
+                    height: 1.5)),
+          );
+        }),
+        const MaterialFullscreenButton(icon: AppIcon('player_fullscreen', size: 16)),
       ],
     );
   }
@@ -217,11 +341,9 @@ class PlayerView extends GetView<PlayerController> {
             Get.back();
             controller.changeQuality(height);
           },
-          title: Text(title, style: TextStyle(color: Colors.white, fontSize: 15.sp)),
-          subtitle: hint == null
-              ? null
-              : Text(hint, style: TextStyle(color: AppColors.textSecondary, fontSize: 11.sp)),
-          trailing: selected ? const Icon(Icons.check_circle, color: AppColors.greenLight) : null,
+          title: Text(title, style: _t(15, FontWeight.w500, Colors.white)),
+          subtitle: hint == null ? null : Text(hint, style: _t(11, FontWeight.w400, _muted)),
+          trailing: selected ? const Icon(Icons.check_circle, color: AppColors.playerAccentText) : null,
         );
       });
     }
@@ -234,67 +356,82 @@ class PlayerView extends GetView<PlayerController> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Video sifati'.tr,
-                  style: TextStyle(color: AppColors.gold, fontSize: 16.sp, fontWeight: FontWeight.w700)),
+              Text('Video sifati'.tr, style: _t(16, FontWeight.w700, AppColors.gold)),
               SizedBox(height: 8.h),
               if (qualities.isEmpty)
                 Padding(
                   padding: EdgeInsets.all(16.w),
-                  child: Text(
-                    "Bu video uchun sifat tanlab bo'lmaydi".tr,
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13.sp),
-                  ),
+                  child: Text("Bu video uchun sifat tanlab bo'lmaydi".tr, style: _t(13, FontWeight.w400, _muted)),
                 )
               else ...[
                 option(0, 'Avto'.tr, hint: "Internet tezligiga qarab avtomatik".tr),
-                for (final q in qualities)
-                  option(q.height, q.label, hint: q.height >= 720 ? 'HD' : null),
+                for (final q in qualities) option(q.height, q.label, hint: q.height >= 720 ? 'HD' : null),
               ],
             ],
           ),
         ),
       ),
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.playerCard,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
     );
   }
 
+  /// Figma: "Episode / ..." kartochkasi.
   Widget _episodeTile(EpisodeModel episode, bool isPlaying) {
     final watched = episode.watchedSeconds ?? 0;
     final total = episode.durationSeconds ?? 0;
     final progress = total > 0 ? (watched / total).clamp(0.0, 1.0) : 0.0;
     final size = episode.fileSizeMb;
 
-    return InkWell(
-      onTap: () => controller.playEpisode(episode),
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-        padding: EdgeInsets.all(8.w),
-        decoration: BoxDecoration(
-          color: isPlaying ? AppColors.surfaceLight : Colors.transparent,
-          borderRadius: BorderRadius.circular(12.r),
-          border: isPlaying ? Border.all(color: AppColors.green) : null,
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8.r),
-              child: SizedBox(
-                width: 110.w,
-                height: 62.h,
+    return Material(
+      color: AppColors.playerCard,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: isPlaying ? AppColors.playerGreen : Colors.white.withValues(alpha: 0.05)),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => controller.playEpisode(episode),
+        child: Padding(
+          padding: EdgeInsets.all(8.w),
+          child: Row(
+            children: [
+              Container(
+                width: 112.w,
+                height: 68.h,
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     AppNetworkImage(episode.thumbnail),
+                    ColoredBox(color: Colors.black.withValues(alpha: 0.2)),
+                    // Figma: "Play bg" + o'yin ikonkasi (yopiq qismda qulf).
                     Center(
-                      child: Icon(
-                        !episode.canWatch
-                            ? Icons.lock_outline
-                            : (isPlaying ? Icons.equalizer_rounded : Icons.play_circle_fill),
-                        color: Colors.white.withValues(alpha: 0.9),
-                        size: 24.sp,
-                      ),
+                      child: episode.canWatch
+                          ? Stack(alignment: Alignment.center, children: [
+                              AppIcon('ep_play_bg', size: 24.w),
+                              AppIcon('ep_play', size: 14.w),
+                            ])
+                          : Icon(Icons.lock_outline, color: Colors.white.withValues(alpha: 0.9), size: 20.sp),
                     ),
+                    if (total > 0)
+                      Positioned(
+                        right: 4.w,
+                        bottom: progress > 0 ? 7.h : 4.h,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 4.w),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                          child: Text(_clock(total), style: _t(10, FontWeight.w500, const Color(0xFFD1D5DB), height: 1.5)),
+                        ),
+                      ),
                     if (progress > 0)
                       Align(
                         alignment: Alignment.bottomCenter,
@@ -302,74 +439,136 @@ class PlayerView extends GetView<PlayerController> {
                           value: progress,
                           minHeight: 3,
                           backgroundColor: Colors.white24,
-                          color: AppColors.gold,
+                          color: AppColors.playerAccent,
                         ),
                       ),
                   ],
                 ),
               ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    episode.title ?? '@n-qism'.trParams({'n': '${episode.episodeNumber}'}),
-                    style: TextStyle(
-                      color: isPlaying ? AppColors.greenLight : Colors.white,
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      episode.title ?? '@n-qism'.trParams({'n': '${episode.episodeNumber}'}),
+                      style: _t(12, FontWeight.w600,
+                          isPlaying ? AppColors.playerAccentText : const Color(0xFFF3F4F6), height: 16.5 / 12),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    [
-                      if (total > 0) formatDuration(total),
-                      if (size != null && size > 0)
-                        size >= 1024 ? '${(size / 1024).toStringAsFixed(1)} GB' : '${size.round()} MB',
-                    ].join(' • '),
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 11.sp),
-                  ),
-                ],
+                    SizedBox(height: 4.h),
+                    Row(
+                      children: [
+                        Text('@n-qism'.trParams({'n': '${episode.episodeNumber ?? ''}'}),
+                            style: _t(11, FontWeight.w500, AppColors.playerAccentText, height: 1.5)),
+                        if (size != null && size > 0) ...[
+                          Text('  •  ', style: _t(11, FontWeight.w400, _muted)),
+                          Text(size >= 1024 ? '${(size / 1024).toStringAsFixed(1)} GB' : '${size.round()} MB',
+                              style: _t(11, FontWeight.w400, _muted, height: 1.5)),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (episode.canWatch && episode.videoUrl != 'offline')
-              DownloadButton(
-                episode: episode,
-                seriesId: controller.currentSeriesId.value,
-                seriesTitle: controller.seriesTitle.value,
-              ),
-          ],
+              if (episode.canWatch && episode.videoUrl != 'offline')
+                DownloadButton(
+                  episode: episode,
+                  seriesId: controller.currentSeriesId.value,
+                  seriesTitle: controller.seriesTitle.value,
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTab(int index, String title) {
+  static String _clock(int seconds) {
+    final h = seconds ~/ 3600;
+    final m = (seconds % 3600) ~/ 60;
+    final s = seconds % 60;
+    String two(int v) => v.toString().padLeft(2, '0');
+    return h > 0 ? '$h:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
+  }
+
+  Widget _buildTab(int index, String title, {int? count}) {
     final isSelected = controller.currentTabIndex.value == index;
-    return GestureDetector(
-      onTap: () => controller.currentTabIndex.value = index,
-      child: Column(
-        children: [
-          Text(
-            title.tr,
-            style: TextStyle(
-              color: isSelected ? AppColors.greenLight : AppColors.textSecondary,
-              fontSize: 13.sp,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            ),
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => controller.currentTabIndex.value = index,
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          decoration: BoxDecoration(
+            border: Border(
+                bottom: BorderSide(color: isSelected ? AppColors.playerAccent : Colors.transparent, width: 2)),
           ),
-          SizedBox(height: 8.h),
-          Container(
-            height: 2,
-            width: 40.w,
-            color: isSelected ? AppColors.green : Colors.transparent,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  title.tr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _t(12, isSelected ? FontWeight.w700 : FontWeight.w500,
+                      isSelected ? AppColors.playerAccentText : _muted,
+                      height: 16 / 12),
+                ),
+              ),
+              if (isSelected && count != null) ...[
+                SizedBox(width: 6.w),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.playerAccent.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text('$count', style: _t(10, FontWeight.w400, AppColors.playerAccentText, height: 1.5)),
+                ),
+              ],
+            ],
           ),
-        ],
+        ),
       ),
+    );
+  }
+}
+
+/// Figma: "Btn / Ijro" — 56px yashil doira, 4px och yashil hoshiya.
+class _PlayPauseButton extends StatelessWidget {
+  const _PlayPauseButton({required this.player});
+  final PlayerController player;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<bool>(
+      stream: player.player.stream.playing,
+      initialData: player.player.state.playing,
+      builder: (_, snap) {
+        final playing = snap.data ?? false;
+        return GestureDetector(
+          onTap: player.player.playOrPause,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.playerGreen,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.playerAccent.withValues(alpha: 0.2), width: 4),
+              boxShadow: [
+                BoxShadow(color: const Color(0xFF022C22).withValues(alpha: 0.6), blurRadius: 15, offset: const Offset(0, 10))
+              ],
+            ),
+            alignment: Alignment.center,
+            child: playing
+                ? const Icon(Icons.pause_rounded, color: Colors.white, size: 28)
+                : const AppIcon('player_play', size: 28),
+          ),
+        );
+      },
     );
   }
 }

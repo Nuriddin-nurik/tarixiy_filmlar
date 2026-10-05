@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../data/models/series_details_model.dart';
 import '../../../data/models/series_model.dart';
+import '../../../data/models/subscription_models.dart';
 import '../../../data/providers/api_provider.dart';
 import '../../../core/widgets/app_widgets.dart';
 
@@ -14,6 +15,8 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
   var isLoading = true.obs;
   var liked = false.obs;
   var likeCount = 0.obs;
+  /// Obuna tariflari ("Pullik bo'limlar" kartochkasi uchun).
+  var plans = <SubscriptionPlanModel>[].obs;
 
   @override
   void onInit() {
@@ -21,6 +24,15 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
     series = Get.arguments as SeriesModel;
     WidgetsBinding.instance.addObserver(this);
     fetchDetails();
+    _loadPlans();
+  }
+
+  Future<void> _loadPlans() async {
+    try {
+      plans.value = await _apiProvider.getSubscriptionPlans();
+    } catch (_) {
+      // Tariflar bo'lmasa, faqat serialni sotib olish varianti ko'rinadi.
+    }
   }
 
   @override

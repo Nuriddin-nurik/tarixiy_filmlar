@@ -58,6 +58,11 @@ class PlayerController extends GetxController {
   List<int> get seasons =>
       (episodes.map((e) => e.seasonNumber ?? 1).toSet().toList()..sort());
 
+  /// "Barcha qism" tabidagi son — tanlangan fasldagi qismlar.
+  int get visibleEpisodesCount => selectedSeason.value == null
+      ? episodes.length
+      : episodes.where((e) => (e.seasonNumber ?? 1) == selectedSeason.value).length;
+
   List<EpisodeModel> get visibleEpisodes {
     var list = episodes.toList();
     if (selectedSeason.value != null) {

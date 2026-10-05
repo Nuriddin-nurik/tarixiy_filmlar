@@ -12,9 +12,11 @@ import '../../../core/widgets/app_widgets.dart';
 import '../../../data/models/continue_watching_model.dart';
 import '../../../data/models/series_model.dart';
 import '../../main/controllers/main_controller.dart';
+import '../../main/views/main_view.dart';
 import '../controllers/home_controller.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 
+/// Bosh sahifa — Figma: "02 Bosh sahifa" (node 2:2).
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
@@ -43,7 +45,26 @@ class HomeView extends GetView<HomeController> {
 
         final data = controller.homeData.value;
         final banners = data?.banners ?? const <BannerModel>[];
-        final byGenre = controller.seriesByGenre;
+        final genres = controller.seriesByGenre.entries.toList();
+        final withoutGenre = controller.series.where((s) => s.genreNames.isEmpty).toList();
+        void openCatalog() => Get.find<MainController>().changePage(1);
+
+        Widget genreSection(MapEntry<String, List<SeriesModel>> e, String icon, {double top = 0}) => Padding(
+              padding: EdgeInsets.only(top: top, bottom: 28.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SectionHeader(
+                    title: e.key,
+                    subtitle: '@n ta serial'.trParams({'n': '${e.value.length}'}),
+                    icon: icon,
+                    onSeeAll: openCatalog,
+                  ),
+                  SizedBox(height: 14.h),
+                  _PosterRow(series: e.value),
+                ],
+              ),
+            );
 
         return Stack(
           children: [
@@ -52,68 +73,78 @@ class HomeView extends GetView<HomeController> {
               backgroundColor: AppColors.surface,
               onRefresh: controller.fetchHomeData,
               child: ListView(
-                padding: EdgeInsets.only(bottom: 24.h),
+                // Suzib turuvchi pastki menyu ostida kontent qolib ketmasligi uchun.
+                padding: EdgeInsets.only(bottom: kFloatingNavSpace),
                 children: [
                   if (banners.isNotEmpty)
                     _HeroCarousel(banners: banners)
                   else
                     SizedBox(height: MediaQuery.of(context).padding.top + 72.h),
 
-                  if (controller.continueWatching.isNotEmpty) ...[
-                    SizedBox(height: 24.h),
-                    SectionHeader(title: "Ko'rishni davom etish".tr),
-                    SizedBox(height: 12.h),
-                    SizedBox(
-                      height: 150.h,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        itemCount: controller.continueWatching.length,
-                        separatorBuilder: (_, __) => SizedBox(width: 12.w),
-                        itemBuilder: (_, i) => _ContinueCard(item: controller.continueWatching[i]),
+                  // Figma tartibi: birinchi janr → "Ko'rishni davom etish" → qolgan janrlar → "Janrlar".
+                  if (genres.isNotEmpty) genreSection(genres.first, 'crown_small'),
+
+                  if (controller.continueWatching.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(top: 16.h, bottom: 28.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SectionHeader(
+                            title: "Ko'rishni davom etish".tr,
+                            accentBar: true,
+                            onSeeAll: openCatalog,
+                          ),
+                          SizedBox(height: 12.h),
+                          SizedBox(
+                            height: 128.h + 8.h + 18.h + 4.h + 16.h + 4.h,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: EdgeInsets.symmetric(horizontal: 20.w),
+                              itemCount: controller.continueWatching.length,
+                              separatorBuilder: (_, __) => SizedBox(width: 14.w),
+                              itemBuilder: (_, i) => _ContinueCard(item: controller.continueWatching[i]),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
 
-                  for (final entry in byGenre.entries) ...[
-                    SizedBox(height: 24.h),
-                    SectionHeader(
-                      title: entry.key,
-                      subtitle: '@n ta serial'.trParams({'n': '${entry.value.length}'}),
-                      onSeeAll: () => Get.find<MainController>().changePage(1),
-                    ),
-                    SizedBox(height: 12.h),
-                    _PosterRow(series: entry.value),
-                  ],
+                  for (final e in genres.skip(1)) genreSection(e, 'gold_dot'),
 
-                  if (controller.series.isNotEmpty) ...[
-                    SizedBox(height: 24.h),
-                    SectionHeader(
-                      title: 'Barcha seriallar'.tr,
-                      onSeeAll: () => Get.find<MainController>().changePage(1),
-                    ),
-                    SizedBox(height: 12.h),
-                    _PosterRow(series: controller.series),
-                  ],
+                  if (withoutGenre.isNotEmpty)
+                    genreSection(MapEntry('Barcha seriallar'.tr, withoutGenre), 'gold_dot'),
 
-                  if (byGenre.isNotEmpty) ...[
-                    SizedBox(height: 24.h),
-                    SectionHeader(title: 'Janrlar'.tr, subtitle: "Kategoriyalar bo'yicha izlash".tr),
-                    SizedBox(height: 12.h),
-                    SizedBox(
-                      height: 84.h,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        itemCount: byGenre.length,
-                        separatorBuilder: (_, __) => SizedBox(width: 10.w),
-                        itemBuilder: (_, i) => _GenreChip(
-                          name: byGenre.keys.elementAt(i),
-                          onTap: () => Get.find<MainController>().changePage(1),
-                        ),
+                  if (genres.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 40.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SectionHeader(
+                            title: 'Janrlar'.tr,
+                            subtitle: "Kategoriyalar bo'yicha saralash".tr,
+                            icon: 'genres_small',
+                            onSeeAll: openCatalog,
+                          ),
+                          SizedBox(height: 16.h),
+                          SizedBox(
+                            height: 64.h + 8.h + 16.h + 12.h,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: EdgeInsets.symmetric(horizontal: 20.w),
+                              itemCount: genres.length,
+                              separatorBuilder: (_, __) => SizedBox(width: 14.w),
+                              itemBuilder: (_, i) => _GenreChip(
+                                name: genres[i].key,
+                                highlighted: i == 0,
+                                onTap: openCatalog,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
                 ],
               ),
             ),
@@ -125,6 +156,7 @@ class HomeView extends GetView<HomeController> {
   }
 }
 
+/// Figma: "Header (fixed, blur)" — logo, qidiruv va bildirishnoma.
 class _TopBar extends StatelessWidget {
   const _TopBar();
 
@@ -135,31 +167,56 @@ class _TopBar extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
-          padding: EdgeInsets.fromLTRB(12.w, top + 6.h, 4.w, 6.h),
+          padding: EdgeInsets.fromLTRB(20.w, top + 8.h, 20.w, 16.h),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.black.withValues(alpha: 0.7), Colors.black.withValues(alpha: 0.3)],
+              colors: [
+                Colors.black.withValues(alpha: 0.85),
+                Colors.black.withValues(alpha: 0.4),
+                Colors.black.withValues(alpha: 0),
+              ],
             ),
           ),
           child: Row(
             children: [
-              Image.asset('assets/logo.png', height: 40.h, fit: BoxFit.contain),
+              Image.asset('assets/logo.png', width: 90.w, height: 36.h, fit: BoxFit.contain),
               const Spacer(),
-              IconButton(
-                onPressed: () => Get.find<MainController>().changePage(1),
-                icon: const Icon(Icons.search_rounded, color: Colors.white),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => Get.find<MainController>().changePage(1),
+                child: Padding(padding: EdgeInsets.all(4.w), child: AppIcon('search', size: 18.w)),
               ),
+              SizedBox(width: 12.w),
               Obx(() {
                 final unread = Get.find<NotificationsController>().unreadCount.value;
-                return IconButton(
-                  onPressed: () => Get.toNamed(Routes.NOTIFICATIONS),
-                  icon: Badge(
-                    isLabelVisible: unread > 0,
-                    backgroundColor: AppColors.danger,
-                    label: Text(unread > 99 ? '99+' : '$unread'),
-                    child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => Get.toNamed(Routes.NOTIFICATIONS),
+                  child: Padding(
+                    padding: EdgeInsets.all(4.w),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        AppIcon('bell', size: 18.w),
+                        // Figma: "Unread dot" — qizil nuqta, qora hoshiya.
+                        if (unread > 0)
+                          Positioned(
+                            right: -4.w,
+                            top: -4.w,
+                            child: Container(
+                              width: 10.w,
+                              height: 10.w,
+                              decoration: BoxDecoration(
+                                color: AppColors.danger,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.black, width: 2),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               }),
@@ -205,7 +262,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final height = 460.h;
+    final height = 470.h;
     return SizedBox(
       height: height,
       child: Stack(
@@ -215,9 +272,10 @@ class _HeroCarouselState extends State<_HeroCarousel> {
             itemCount: widget.banners.length,
             itemBuilder: (_, i) => _HeroItem(banner: widget.banners[i], height: height),
           ),
+          // Figma: "Slider dots" — faol nuqta 20×6 oltin, qolganlari 6×6 oq 30%.
           if (widget.banners.length > 1)
             Positioned(
-              bottom: 8.h,
+              bottom: 26.h,
               left: 0,
               right: 0,
               child: Center(
@@ -227,8 +285,10 @@ class _HeroCarouselState extends State<_HeroCarousel> {
                   effect: ExpandingDotsEffect(
                     dotWidth: 6.w,
                     dotHeight: 6.w,
-                    expansionFactor: 3,
-                    dotColor: Colors.white24,
+                    spacing: 6.w,
+                    radius: 3.w,
+                    expansionFactor: 20 / 6,
+                    dotColor: Colors.white.withValues(alpha: 0.3),
                     activeDotColor: AppColors.gold,
                   ),
                 ),
@@ -249,7 +309,7 @@ class _HeroItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final movie = banner.movie;
     final title = movie?.title ?? banner.seriesTitle ?? '';
-    final genre = movie?.genreNames.isNotEmpty == true ? movie!.genreNames.first : 'Tarixiy serial'.tr;
+    final subtitle = movie?.genreNames.take(2).join(' • ') ?? '';
 
     return GestureDetector(
       onTap: movie == null ? null : () => Get.toNamed(Routes.SERIES_DETAIL, arguments: movie),
@@ -257,41 +317,51 @@ class _HeroItem extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           AppNetworkImage(banner.image ?? movie?.imagePath, height: height),
+          // Figma: "Overlay" gradienti.
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                stops: const [0, 0.35, 0.75, 1],
+                stops: const [0, 0.3, 0.6, 0.85, 1],
                 colors: [
-                  Colors.black.withValues(alpha: 0.4),
-                  Colors.transparent,
-                  AppColors.background.withValues(alpha: 0.85),
+                  AppColors.background.withValues(alpha: 0.8),
+                  AppColors.background.withValues(alpha: 0.25),
+                  AppColors.background.withValues(alpha: 0.45),
+                  AppColors.background.withValues(alpha: 0.88),
                   AppColors.background,
                 ],
               ),
             ),
           ),
           Positioned(
-            left: 24.w,
-            right: 24.w,
-            bottom: 28.h,
+            left: 20.w,
+            right: 20.w,
+            bottom: 48.h,
             child: Column(
               children: [
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.green.withValues(alpha: 0.2),
-                    border: Border.all(color: AppColors.green),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Text(
-                    genre.toUpperCase(),
-                    style: TextStyle(
-                      color: AppColors.greenLight,
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
+                // Figma: "Badge / Tavsiya etiladi".
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.green.withValues(alpha: 0.2),
+                        border: Border.all(color: AppColors.green.withValues(alpha: 0.4)),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'TAVSIYA ETILADI'.tr,
+                        style: TextStyle(
+                          color: AppColors.green,
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.1,
+                          height: 16.5 / 11,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -302,32 +372,32 @@ class _HeroItem extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
+                    fontFamily: AppFonts.cinzel,
                     color: AppColors.gold,
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 30.sp,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
-                    height: 1.1,
-                    shadows: const [Shadow(blurRadius: 12, color: Colors.black)],
+                    height: 36 / 30,
+                    shadows: [Shadow(blurRadius: 10, offset: const Offset(0, 2), color: Colors.black.withValues(alpha: 0.8))],
                   ),
                 ),
-                SizedBox(height: 16.h),
-                if (movie != null)
-                  SizedBox(
-                    height: 42.h,
-                    child: ElevatedButton.icon(
-                      onPressed: () => Get.toNamed(Routes.SERIES_DETAIL, arguments: movie),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.green,
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                      ),
-                      icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-                      label: Text(
-                        'Tomosha qilish'.tr,
-                        style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.w600),
-                      ),
+                if (subtitle.isNotEmpty) ...[
+                  SizedBox(height: 2.h),
+                  Text(
+                    subtitle.toUpperCase(),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppFonts.cinzel,
+                      color: AppColors.goldDark,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 3,
+                      height: 16 / 12,
                     ),
                   ),
+                ],
               ],
             ),
           ),
@@ -337,12 +407,15 @@ class _HeroItem extends StatelessWidget {
   }
 }
 
+/// Figma: "Card / Adolat yo'lida" — 225×128 rasm, oltin progress chizig'i.
 class _ContinueCard extends StatelessWidget {
   const _ContinueCard({required this.item});
   final ContinueWatchingModel item;
 
   @override
   Widget build(BuildContext context) {
+    final w = 225.w;
+    final left = item.durationSeconds - item.positionSeconds;
     return GestureDetector(
       onTap: () => Get.toNamed(Routes.PLAYER, arguments: {
         'seriesId': item.seriesId,
@@ -350,50 +423,64 @@ class _ContinueCard extends StatelessWidget {
         'title': item.seriesTitle,
       }),
       child: SizedBox(
-        width: 190.w,
+        width: w,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10.r),
-              child: SizedBox(
-                height: 105.h,
-                width: 190.w,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    AppNetworkImage(item.episodeThumbnail ?? item.seriesImagePath),
-                    Center(
-                      child: Container(
-                        padding: EdgeInsets.all(6.w),
-                        decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                        child: Icon(Icons.play_arrow_rounded, color: Colors.white, size: 22.sp),
+            Container(
+              width: w,
+              height: 128.h,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 6, offset: const Offset(0, 4))],
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  AppNetworkImage(item.episodeThumbnail ?? item.seriesImagePath),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      height: 4,
+                      color: Colors.white.withValues(alpha: 0.2),
+                      alignment: Alignment.centerLeft,
+                      child: FractionallySizedBox(
+                        widthFactor: item.progress,
+                        child: Container(
+                          decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(2)),
+                        ),
                       ),
                     ),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: LinearProgressIndicator(
-                        value: item.progress,
-                        minHeight: 3,
-                        backgroundColor: Colors.white24,
-                        color: AppColors.gold,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 8.h),
-            Text(
-              item.seriesTitle ?? '',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.w600),
-            ),
-            Text(
-              '@n-qism • @t qoldi'.trParams({'n': '${item.episodeNumber ?? ''}', 't': formatDuration(item.durationSeconds - item.positionSeconds)}),
-              maxLines: 1,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 11.sp),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.seriesTitle ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.white, fontSize: 14.sp, fontWeight: FontWeight.w600, height: 17.5 / 14),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    '@n-qism • @t qoldi'.trParams({'n': '${item.episodeNumber ?? ''}', 't': formatDuration(left)}),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp, height: 16 / 12),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -408,21 +495,21 @@ class _PosterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Poster 2:3 nisbatda (120.w * 1.5) + ostidagi ikki qator matn.
+    // Poster 125×175 + 8 oraliq + ikki qator matn (15+2+15) + 4 pastki chekinish.
     return SizedBox(
-      height: 120.w * 1.5 + 50.sp,
+      height: 175.h + 8.h + 34.sp + 4.h,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
         itemCount: series.length,
-        separatorBuilder: (_, __) => SizedBox(width: 12.w),
+        separatorBuilder: (_, __) => SizedBox(width: 14.w),
         itemBuilder: (_, i) => SeriesPosterCard(series: series[i]),
       ),
     );
   }
 }
 
-/// Vertikal poster kartochkasi (bosh sahifa va katalogda ishlatiladi).
+/// Figma: "Poster" — 125×175, burchak 12, yashil belgi. Bosh sahifa va katalogda ishlatiladi.
 class SeriesPosterCard extends StatelessWidget {
   const SeriesPosterCard({super.key, required this.series, this.width});
   final SeriesModel series;
@@ -430,7 +517,7 @@ class SeriesPosterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final w = width ?? 120.w;
+    final w = width ?? 125.w;
     return GestureDetector(
       onTap: () => Get.toNamed(Routes.SERIES_DETAIL, arguments: series),
       child: SizedBox(
@@ -439,26 +526,40 @@ class SeriesPosterCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AspectRatio(
-              aspectRatio: 2 / 3,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10.r),
+              aspectRatio: 125 / 175,
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 6, offset: const Offset(0, 4))],
+                ),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     AppNetworkImage(series.imagePath),
+                    // Figma: "Badge / Yangi" — biz bepul qismlari bor seriallarni belgilaymiz.
                     if ((series.freeEpisodesCount ?? 0) > 0)
                       Positioned(
-                        top: 6.h,
-                        left: 6.w,
+                        top: 7.h,
+                        left: 7.w,
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                           decoration: BoxDecoration(
                             color: AppColors.green,
-                            borderRadius: BorderRadius.circular(6.r),
+                            borderRadius: BorderRadius.circular(4.r),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 6, offset: const Offset(0, 4))],
                           ),
-                          child: Text(
-                            'BEPUL'.tr,
-                            style: TextStyle(color: Colors.white, fontSize: 9.sp, fontWeight: FontWeight.w700),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AppIcon('badge_star', size: 8.w),
+                              SizedBox(width: 4.w),
+                              Text('Bepul'.tr,
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 10.sp, fontWeight: FontWeight.w600, height: 1.5)),
+                            ],
                           ),
                         ),
                       ),
@@ -466,18 +567,27 @@ class SeriesPosterCard extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: 6.h),
-            Text(
-              series.title ?? '',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.w600),
-            ),
-            Text(
-              series.genreNames.join(', '),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 10.sp),
+            SizedBox(height: 8.h),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    series.title ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.w600, height: 15 / 12),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    series.genreNames.join(', '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 10.sp, height: 1.5),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -486,32 +596,57 @@ class SeriesPosterCard extends StatelessWidget {
   }
 }
 
+/// Figma: "Genre / Sultonlar" — 64×64 ikonka qutisi va nomi.
 class _GenreChip extends StatelessWidget {
-  const _GenreChip({required this.name, required this.onTap});
+  const _GenreChip({required this.name, required this.onTap, this.highlighted = false});
   final String name;
   final VoidCallback onTap;
+  final bool highlighted;
+
+  /// Janr nomiga mos Figma ikonkasi (backend janrlari erkin matn, shuning uchun kalit so'z bo'yicha).
+  static String _iconFor(String name) {
+    final n = name.toLowerCase();
+    if (n.contains('sulton') || n.contains('saltanat')) return 'genre_sultonlar';
+    if (n.contains('jang')) return 'genre_jangari';
+    if (n.contains('din') || n.contains('ibrat')) return 'genre_diniy';
+    if (n.contains('drama')) return 'genre_drama';
+    if (n.contains('sarguzasht')) return 'genre_sarguzasht';
+    return 'genre_tarixiy';
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 84.w,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
+      child: SizedBox(
+        width: 72.w,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shield_moon_outlined, color: AppColors.gold, size: 24.sp),
-            SizedBox(height: 6.h),
+            Container(
+              width: 64.w,
+              height: 64.w,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: highlighted ? AppColors.green.withValues(alpha: 0.2) : AppColors.surface,
+                border: Border.all(color: highlighted ? AppColors.green : AppColors.border),
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: highlighted
+                    ? [BoxShadow(color: AppColors.green.withValues(alpha: 0.35), blurRadius: 12)]
+                    : null,
+              ),
+              child: AppIcon(_iconFor(name), size: 24.w),
+            ),
+            SizedBox(height: 8.h),
             Text(
               name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 11.sp),
+              style: TextStyle(
+                color: highlighted ? AppColors.green : AppColors.textSecondary,
+                fontSize: 12.sp,
+                fontWeight: highlighted ? FontWeight.w600 : FontWeight.w500,
+                height: 16 / 12,
+              ),
             ),
           ],
         ),

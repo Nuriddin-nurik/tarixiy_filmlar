@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import '../theme/app_colors.dart';
@@ -37,69 +38,119 @@ class AppNetworkImage extends StatelessWidget {
   }
 }
 
-/// Bo'lim sarlavhasi: chapda yashil chiziq + nom, ixtiyoriy izoh va "Barchasi >".
+/// Assets/icons dagi Figma SVG ikonkasi. [color] berilsa, ikonka shu rangga bo'yaladi.
+class AppIcon extends StatelessWidget {
+  const AppIcon(this.name, {super.key, this.size = 18, this.color});
+
+  final String name;
+  final double size;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SvgPicture.asset(
+      'assets/icons/$name.svg',
+      width: size,
+      height: size,
+      colorFilter: color == null ? null : ColorFilter.mode(color!, BlendMode.srcIn),
+    );
+  }
+}
+
+/// Bo'lim sarlavhasi (Figma: "Section header").
+/// Oddiy ko'rinish: 18px qalin sarlavha + kichik oltin ikonka, ostida izoh, o'ngda "Barchasi ›".
+/// [accentBar] — "Ko'rishni davom etish" uslubi: chapda qizil chiziq va 16px sarlavha.
 class SectionHeader extends StatelessWidget {
-  const SectionHeader({super.key, required this.title, this.subtitle, this.onSeeAll});
+  const SectionHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.onSeeAll,
+    this.icon,
+    this.accentBar = false,
+  });
 
   final String title;
   final String? subtitle;
   final VoidCallback? onSeeAll;
 
+  /// Sarlavha yonidagi kichik ikonka nomi (assets/icons), masalan 'crown_small' yoki 'gold_dot'.
+  final String? icon;
+  final bool accentBar;
+
   @override
   Widget build(BuildContext context) {
+    final titleRow = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (accentBar) ...[
+          Container(
+            width: 4.w,
+            height: 20.h,
+            decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(2.r)),
+          ),
+          SizedBox(width: 8.w),
+        ],
+        Flexible(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: accentBar ? AppColors.textPrimary : AppColors.textHeading,
+              fontSize: (accentBar ? 16 : 18).sp,
+              fontWeight: FontWeight.w700,
+              letterSpacing: accentBar ? 0.4 : 0.45,
+              height: accentBar ? 1.5 : 28 / 18,
+            ),
+          ),
+        ),
+        if (icon != null) ...[
+          SizedBox(width: 8.w),
+          AppIcon(icon!, size: icon == 'gold_dot' ? 6.w : 12.w),
+        ],
+      ],
+    );
+
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      // Figma: bo'lim 16px + sarlavha 4px ichki chekinish.
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: accentBar ? CrossAxisAlignment.center : CrossAxisAlignment.end,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 3.w,
-                      height: 16.h,
-                      decoration: BoxDecoration(
-                        color: AppColors.green,
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Flexible(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                if (subtitle != null) ...[
-                  SizedBox(height: 4.h),
+                titleRow,
+                if (subtitle != null)
                   Text(
                     subtitle!,
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 11.sp),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp, height: 16 / 12),
                   ),
-                ],
               ],
             ),
           ),
           if (onSeeAll != null)
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: onSeeAll,
-              child: Row(
-                children: [
-                  Text('Barchasi'.tr, style: TextStyle(color: AppColors.gold, fontSize: 12.sp)),
-                  Icon(Icons.chevron_right, color: AppColors.gold, size: 16.sp),
-                ],
-              ),
+              child: accentBar
+                  ? Padding(
+                      padding: EdgeInsets.all(4.w),
+                      child: AppIcon('chevron_right_12', size: 12.w),
+                    )
+                  : Row(
+                      children: [
+                        Text('Barchasi'.tr,
+                            style: TextStyle(
+                                color: AppColors.gold, fontSize: 12.sp, fontWeight: FontWeight.w600, height: 16 / 12)),
+                        SizedBox(width: 4.w),
+                        AppIcon('chevron_right', size: 10.w),
+                      ],
+                    ),
             ),
         ],
       ),
@@ -187,4 +238,17 @@ void appSnack(String title, String message, {Duration? duration, Color? colorTex
     margin: EdgeInsets.all(12.w),
     duration: duration ?? const Duration(seconds: 3),
   );
+}
+
+/// Kvadrat bo'lmagan Figma SVG (fon effektlari va h.k.), asl ranglari bilan.
+class SvgIcon extends StatelessWidget {
+  const SvgIcon(this.name, {super.key, required this.width, required this.height});
+
+  final String name;
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) =>
+      SvgPicture.asset('assets/icons/$name.svg', width: width, height: height, fit: BoxFit.fill);
 }

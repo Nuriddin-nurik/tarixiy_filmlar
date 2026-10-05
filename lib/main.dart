@@ -64,6 +64,7 @@ class MyApp extends StatelessWidget {
           // Butun ilova qorong'i: standart matn va ikonka ranglari oq bo'ladi.
           theme: ThemeData(
             brightness: Brightness.dark,
+            fontFamily: AppFonts.inter, // Figma: butun ilova Inter shriftida
             scaffoldBackgroundColor: AppColors.background,
             colorScheme: const ColorScheme.dark(
               primary: AppColors.green,

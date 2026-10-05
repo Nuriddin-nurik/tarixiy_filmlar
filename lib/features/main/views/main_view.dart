@@ -1,13 +1,23 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_widgets.dart';
 import '../controllers/main_controller.dart';
 import '../../home/views/home_view.dart';
 import '../../catalog/views/catalog_view.dart';
 import '../../favorites/views/favorites_view.dart';
 import '../../profile/views/profile_view.dart';
+
+/// Suzib turuvchi pastki menyu kontent ustida turadi — ro'yxatlarning pastiga
+/// shuncha bo'sh joy qo'shiladi, oxirgi element menyu ostida qolib ketmasin.
+double get kFloatingNavSpace => 67.h + 32.h + MediaQueryData.fromView(
+        WidgetsBinding.instance.platformDispatcher.views.first)
+    .padding
+    .bottom;
 
 class MainView extends GetView<MainController> {
   const MainView({super.key});
@@ -16,6 +26,8 @@ class MainView extends GetView<MainController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      // Kontent menyu ostidan ham ko'rinadi (Figma: shaffof, xira menyu).
+      extendBody: true,
       body: Obx(() {
         return IndexedStack(
           index: controller.currentIndex.value,
@@ -27,60 +39,72 @@ class MainView extends GetView<MainController> {
           ],
         );
       }),
-      bottomNavigationBar: Obx(() {
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(top: BorderSide(color: AppColors.border)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(0, Icons.home_rounded, 'Bosh sahifa'),
-                  _buildNavItem(1, Icons.grid_view_rounded, 'Epizodlar'),
-                  _buildNavItem(2, Icons.favorite_border_rounded, 'Sevimlilar'),
-                  _buildNavItem(3, Icons.person_outline_rounded, 'Profil'),
-                ],
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                padding: EdgeInsets.all(6.w),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Obx(() => Row(
+                      children: [
+                        _buildNavItem(0, 'nav_home', 'Bosh sahifa'),
+                        _buildNavItem(1, 'nav_episodes', 'Epizodlar'),
+                        _buildNavItem(2, 'nav_favorites', 'Sevimlilar'),
+                        _buildNavItem(3, 'nav_profile', 'Profil'),
+                      ],
+                    )),
               ),
             ),
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
+  /// Figma: "Tab / Bosh sahifa" — tanlangan tab oq 10% fonli kapsula, yashil matn.
+  Widget _buildNavItem(int index, String icon, String label) {
     final isSelected = controller.currentIndex.value == index;
-    final color = isSelected ? AppColors.greenLight : AppColors.textSecondary;
+    final color = isSelected ? AppColors.green : Colors.white.withValues(alpha: 0.8);
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => controller.changePage(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.green.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(14.r),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 22.sp),
-            SizedBox(height: 3.h),
-            Text(
-              label.tr,
-              style: TextStyle(
-                color: color,
-                fontSize: 10.sp,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => controller.changePage(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(vertical: 8.h),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
+            border: Border.all(color: isSelected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppIcon(icon, size: 18.w, color: color),
+              SizedBox(height: 2.h),
+              Text(
+                label.tr,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10.sp,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  height: 1.5,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

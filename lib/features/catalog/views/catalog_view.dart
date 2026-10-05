@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_widgets.dart';
 import '../../home/controllers/home_controller.dart';
 import '../../home/views/home_view.dart';
+import '../../main/views/main_view.dart';
 
 /// "Epizodlar" tabi: barcha seriallar katalogi (qidiruv + janr filtri).
 class CatalogView extends StatefulWidget {
@@ -95,12 +96,12 @@ class _CatalogViewState extends State<CatalogView> {
                         backgroundColor: AppColors.surface,
                         onRefresh: home.fetchHomeData,
                         child: GridView.builder(
-                          padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
+                          padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, kFloatingNavSpace),
                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
                             crossAxisSpacing: 12.w,
                             mainAxisSpacing: 16.h,
-                            childAspectRatio: 0.52,
+                            childAspectRatio: 0.54, // poster 125:175 + ikki qator matn
                           ),
                           itemCount: filtered.length,
                           itemBuilder: (_, i) => SeriesPosterCard(series: filtered[i], width: double.infinity),

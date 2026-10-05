@@ -19,11 +19,15 @@ class DownloadButton extends StatelessWidget {
     required this.episode,
     required this.seriesId,
     required this.seriesTitle,
+    this.wide = false,
   });
 
   final EpisodeModel episode;
   final int seriesId;
   final String seriesTitle;
+
+  /// true — Figma "Quick actions" dagi keng "Yuklab olish" tugmasi; false — ro'yxatdagi 36px doira.
+  final bool wide;
 
   DownloadController get _dc => Get.find<DownloadController>();
 
@@ -36,59 +40,106 @@ class DownloadButton extends StatelessWidget {
       _dc.downloads.length;
 
       if (_dc.isComplete(id)) {
-        return IconButton(
-          icon: const Icon(Icons.offline_pin_rounded, color: AppColors.greenLight),
-          onPressed: () => _confirm(
+        return _shell(
+          onTap: () => _confirm(
             title: "Yuklanmani o'chirish".tr,
             message: "Bu qism telefondan o'chiriladi.".tr,
             action: "O'chirish".tr,
             onConfirm: () => _dc.delete(id),
           ),
+          icon: Icon(Icons.offline_pin_rounded, color: AppColors.playerAccentText, size: (wide ? 16 : 18).w),
+          label: 'Yuklangan'.tr,
         );
       }
       if (progress != null) {
-        return InkWell(
-          customBorder: const CircleBorder(),
+        final ring = SizedBox(
+          width: (wide ? 16 : 22).w,
+          height: (wide ? 16 : 22).w,
+          child: CircularProgressIndicator(
+            value: progress == 0 ? null : progress,
+            color: AppColors.playerAccent,
+            backgroundColor: Colors.white.withValues(alpha: 0.1),
+            strokeWidth: 2,
+          ),
+        );
+        return _shell(
           onTap: () => _confirm(
             title: 'Yuklashni bekor qilish'.tr,
             message: "Yuklangan qismi o'chiriladi.".tr,
             action: 'Bekor qilish'.tr,
             onConfirm: () => _dc.cancel(id),
           ),
-          child: Padding(
-            padding: EdgeInsets.all(8.w),
-            child: SizedBox(
-              width: 30.w,
-              height: 30.w,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    value: progress == 0 ? null : progress,
-                    color: AppColors.green,
-                    backgroundColor: AppColors.border,
-                    strokeWidth: 2.5,
-                  ),
+          icon: wide
+              ? ring
+              : Stack(alignment: Alignment.center, children: [
+                  ring,
                   Text('${(progress * 100).floor()}',
-                      style: TextStyle(color: Colors.white, fontSize: 9.sp, fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ),
-          ),
+                      style: TextStyle(color: Colors.white, fontSize: 8.sp, fontWeight: FontWeight.w600)),
+                ]),
+          label: '${'Yuklanmoqda'.tr} ${(progress * 100).floor()}%',
         );
       }
       if (_dc.isPaused(id)) {
-        return IconButton(
-          tooltip: 'Davom ettirish'.tr,
-          icon: const Icon(Icons.play_for_work_rounded, color: AppColors.gold),
-          onPressed: () => _dc.resume(id),
+        return _shell(
+          onTap: () => _dc.resume(id),
+          icon: Icon(Icons.play_for_work_rounded, color: AppColors.gold, size: (wide ? 16 : 18).w),
+          label: 'Davom ettirish'.tr,
         );
       }
-      return IconButton(
-        icon: Icon(Icons.download_rounded, color: AppColors.greenLight, size: 22.sp),
-        onPressed: _pickQuality,
+      return _shell(
+        onTap: _pickQuality,
+        icon: AppIcon(wide ? 'download_16' : 'ep_download', size: (wide ? 16 : 18).w),
+        label: 'Yuklab olish'.tr,
       );
     });
+  }
+
+  /// Figma: ro'yxatda — 36px doira (yashil 20% fon, #0D7A57 hoshiya);
+  /// keng variant — 8px burchakli tugma, ikonka + matn.
+  Widget _shell({required VoidCallback onTap, required Widget icon, required String label}) {
+    if (!wide) {
+      return Padding(
+        padding: EdgeInsets.only(left: 8.w),
+        child: Material(
+          color: AppColors.playerGreen.withValues(alpha: 0.2),
+          shape: const CircleBorder(side: BorderSide(color: AppColors.playerGreen)),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: SizedBox(width: 36.w, height: 36.w, child: Center(child: icon)),
+          ),
+        ),
+      );
+    }
+    return Material(
+      color: AppColors.playerGreen.withValues(alpha: 0.2),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: AppColors.playerGreen.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              icon,
+              SizedBox(width: 6.w),
+              Text(label,
+                  style: TextStyle(
+                    fontFamily: AppFonts.notoSerif,
+                    color: AppColors.playerAccentText,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 16 / 12,
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _pickQuality() async {

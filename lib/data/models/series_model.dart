@@ -21,6 +21,8 @@ class SeriesModel {
   final int? freeEpisodesCount;
   final int? monthlyPrice;
   final int? quarterlyPrice;
+  /// true — umumiy obuna orqali ochiladi; aks holda faqat alohida sotib olinadi.
+  final bool? subscriptionBased;
 
   SeriesModel({
     this.id,
@@ -34,6 +36,7 @@ class SeriesModel {
     this.freeEpisodesCount,
     this.monthlyPrice,
     this.quarterlyPrice,
+    this.subscriptionBased,
   });
 
   factory SeriesModel.fromJson(Map<String, dynamic> json) {
@@ -51,6 +54,7 @@ class SeriesModel {
       freeEpisodesCount: json['freeEpisodesCount'],
       monthlyPrice: json['monthlyPrice'],
       quarterlyPrice: json['quarterlyPrice'],
+      subscriptionBased: json['subscriptionBased'],
     );
   }
 

@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_widgets.dart';
 import '../../home/views/home_view.dart';
 import '../controllers/favorites_controller.dart';
+import '../../main/views/main_view.dart';
 
 class FavoritesView extends GetView<FavoritesController> {
   const FavoritesView({super.key});
@@ -52,12 +53,12 @@ class FavoritesView extends GetView<FavoritesController> {
                   backgroundColor: AppColors.surface,
                   onRefresh: () => controller.load(),
                   child: GridView.builder(
-                    padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
+                    padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, kFloatingNavSpace),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
                       crossAxisSpacing: 12.w,
                       mainAxisSpacing: 16.h,
-                      childAspectRatio: 0.52,
+                      childAspectRatio: 0.54, // poster 125:175 + ikki qator matn
                     ),
                     itemCount: controller.favorites.length,
                     itemBuilder: (_, i) => SeriesPosterCard(series: controller.favorites[i], width: double.infinity),
