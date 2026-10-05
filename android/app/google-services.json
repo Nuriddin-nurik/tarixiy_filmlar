@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "133441254783",
+    "project_id": "tarixiy-kinolar-6c55f",
+    "storage_bucket": "tarixiy-kinolar-6c55f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:133441254783:android:0304bc9772437eb754164a",
+        "android_client_info": {
+          "package_name": "com.example.tarixiy_filimlar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "133441254783-ibqhmkaecf8oafmk6iuiss77j9s93767.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.tarixiy_filimlar",
+            "certificate_hash": "70de3ba80cd165e3144e05efab1ca4bb0c338ef1"
+          }
+        },
+        {
+          "client_id": "133441254783-8j6udn3s6cvo1gc6c34tkrpbpqmd07dv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXSj2t-vVFC3BD4SAPkol92meEVK7Mp_c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "133441254783-8j6udn3s6cvo1gc6c34tkrpbpqmd07dv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
