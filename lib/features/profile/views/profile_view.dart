@@ -166,7 +166,7 @@ class ProfileView extends GetView<ProfileController> {
                     style: TextStyle(color: AppColors.greenLight, fontSize: 15.sp, fontWeight: FontWeight.w700)),
                 Text(
                   active && sub!.endDate != null
-                      ? '@d kun qoldi • @date gacha'.trParams({'d': '${sub.daysLeft}', 'date': date(sub.endDate!)})
+                      ? '@kun kun qoldi • @sana gacha'.trParams({'kun': '${sub.daysLeft}', 'sana': date(sub.endDate!)})
                       : "Barcha seriallarni cheklovsiz ko'ring".tr,
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 11.sp),
                 ),
@@ -208,7 +208,7 @@ class ProfileView extends GetView<ProfileController> {
               title: Text(s.title, style: TextStyle(color: Colors.white, fontSize: 14.sp)),
               subtitle: s.endDate == null
                   ? null
-                  : Text('@d kun qoldi • @date gacha'.trParams({'d': '${s.daysLeft}', 'date': date(s.endDate!)}),
+                  : Text('@kun kun qoldi • @sana gacha'.trParams({'kun': '${s.daysLeft}', 'sana': date(s.endDate!)}),
                       style: TextStyle(
                           color: s.daysLeft <= 3 ? AppColors.danger : AppColors.textSecondary, fontSize: 11.sp)),
               trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),

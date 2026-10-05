@@ -143,7 +143,7 @@ const Map<String, String> _ru = {
   "To'lov qabul qilindi": "Оплата получена",
   "Barcha qismlar ochildi. Yoqimli tomosha!": "Все серии открыты. Приятного просмотра!",
   "Premium obuna faol": "Премиум подписка активна",
-  "@d kun qoldi • @date gacha": "Осталось @d дн. • до @date",
+  "@kun kun qoldi • @sana gacha": "Осталось @kun дн. • до @sana",
   "Uzaytirish": "Продлить",
   "SOTIB OLINGAN SERIALLAR": "КУПЛЕННЫЕ СЕРИАЛЫ",
   "Serial topilmadi": "Сериал не найден",
