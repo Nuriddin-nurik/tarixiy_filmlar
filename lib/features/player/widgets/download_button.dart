@@ -99,7 +99,13 @@ class DownloadButton extends StatelessWidget {
     }
     List<HlsVariant> variants;
     try {
-      variants = await _dc.variants(url);
+      Get.dialog(const Center(child: CircularProgressIndicator(color: AppColors.green)),
+          barrierDismissible: false);
+      try {
+        variants = await _dc.variants(url);
+      } finally {
+        Get.back();
+      }
     } catch (_) {
       appSnack('Xato'.tr, "Internetni tekshiring".tr);
       return;
@@ -134,14 +140,14 @@ class DownloadButton extends StatelessWidget {
                   leading: Icon(Icons.hd_outlined,
                       color: v.height >= 720 ? AppColors.gold : AppColors.textSecondary),
                   title: Text('${v.height}p', style: TextStyle(color: Colors.white, fontSize: 15.sp)),
-                  subtitle: duration > 0 && v.bandwidth > 0
+                  subtitle: v.sampledBytes != null || (duration > 0 && v.bandwidth > 0)
                       ? Text('~${_size(v.estimateMb(duration))}',
                           style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp))
                       : null,
                   trailing: const Icon(Icons.download_rounded, color: AppColors.greenLight),
                   onTap: () async {
                     Get.back();
-                    final needMb = duration > 0 ? v.estimateMb(duration) : 0.0;
+                    final needMb = v.sampledBytes != null || duration > 0 ? v.estimateMb(duration) : 0.0;
                     if (!await _checksPass(needMb)) return;
                     _dc.startDownload(
                       DownloadedEpisode(

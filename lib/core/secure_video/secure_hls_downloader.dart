@@ -163,10 +163,45 @@ class HlsVariant {
   final int height;
   final String url;
   final int bandwidth;
-  const HlsVariant(this.height, this.url, this.bandwidth);
+  HlsVariant(this.height, this.url, this.bandwidth);
 
-  /// Taxminiy hajm (MB) — bitreyt × davomiylik.
-  double estimateMb(int durationSeconds) => bandwidth * durationSeconds / 8 / 1024 / 1024;
+  /// Bo'laklardan namuna olib hisoblangan haqiqiy hajm (bayt). null — hisoblanmagan.
+  int? sampledBytes;
+
+  /// Taxminiy hajm (MB). Namuna bo'yicha hisoblangan bo'lsa — o'sha (aniq),
+  /// bo'lmasa bitreyt × davomiylik. Diqqat: BANDWIDTH eng yuqori (peak) qiymat,
+  /// shuning uchun bu zaxira hisob haqiqiydan 2–3 baravar katta chiqadi.
+  double estimateMb(int durationSeconds) => sampledBytes != null
+      ? sampledBytes! / 1024 / 1024
+      : bandwidth * durationSeconds / 8 / 1024 / 1024;
+
+  /// Playlist'dagi bir nechta bo'lakning hajmini (HEAD so'rovi bilan) olib,
+  /// o'rtachasini bo'laklar soniga ko'paytiradi. Xato bo'lsa sampledBytes null qoladi.
+  Future<void> sampleSize(Dio dio, {int samples = 8}) async {
+    try {
+      final res = await dio.get<String>(url, options: Options(responseType: ResponseType.plain));
+      final base = url.substring(0, url.lastIndexOf('/') + 1);
+      final segs = (res.data ?? '')
+          .split('\n')
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty && !l.startsWith('#'))
+          .map((l) => l.startsWith('http') ? l : base + l)
+          .toList();
+      if (segs.isEmpty) return;
+      final n = samples.clamp(1, segs.length);
+      final picks = List.generate(n, (i) => segs[(i * (segs.length - 1) / (n == 1 ? 1 : n - 1)).round()]);
+      final sizes = await Future.wait(picks.map((u) async {
+        final h = await dio.head(u);
+        return int.tryParse(h.headers.value('content-length') ?? '') ?? 0;
+      }));
+      final valid = sizes.where((s) => s > 0).toList();
+      if (valid.isEmpty) return;
+      final avg = valid.reduce((a, b) => a + b) / valid.length;
+      sampledBytes = (avg * segs.length).round();
+    } catch (_) {
+      // Namuna olinmasa — bitreyt bo'yicha zaxira hisob ishlatiladi.
+    }
+  }
 }
 
 class SecureDownloadTask {

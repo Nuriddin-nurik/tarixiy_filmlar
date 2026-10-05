@@ -133,8 +133,12 @@ class DownloadController extends GetxController {
 
   /// Master playlist'dan mavjud sifatlarni oladi (yuklash oynasi uchun).
   Future<List<HlsVariant>> variants(String masterUrl) async {
-    final res = await Dio().get<String>(masterUrl, options: Options(responseType: ResponseType.plain));
-    return SecureHlsDownloader.parseMaster(res.data ?? '', masterUrl);
+    final dio = Dio();
+    final res = await dio.get<String>(masterUrl, options: Options(responseType: ResponseType.plain));
+    final list = SecureHlsDownloader.parseMaster(res.data ?? '', masterUrl);
+    // Haqiqiy hajmni bo'laklardan namuna olib hisoblaymiz (BANDWIDTH 2–3 baravar oshirib ko'rsatadi).
+    await Future.wait(list.map((v) => v.sampleSize(dio)));
+    return list;
   }
 
   Future<void> startDownload(DownloadedEpisode info, HlsVariant variant) async {
