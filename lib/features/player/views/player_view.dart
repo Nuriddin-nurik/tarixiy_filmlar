@@ -35,14 +35,13 @@ class PlayerView extends GetView<PlayerController> {
     final video = MaterialVideoControlsTheme(
       normal: _controlsTheme(fullscreen: false),
       fullscreen: _controlsTheme(fullscreen: true),
-      child: Video(controller: controller.videoController, controls: MaterialVideoControls),
+      child: Video(
+        controller: controller.videoController,
+        controls: MaterialVideoControls,
+        onEnterFullscreen: PlayerController.enterFullscreen,
+        onExitFullscreen: PlayerController.exitFullscreen,
+      ),
     );
-
-    // Telefon yon tomonga burilsa — faqat video, butun ekran bo'ylab
-    // (aks holda pastdagi ro'yxat ekrandan chiqib ketadi).
-    if (MediaQuery.of(context).orientation == Orientation.landscape) {
-      return Scaffold(backgroundColor: Colors.black, body: video);
-    }
 
     return Scaffold(
       backgroundColor: AppColors.playerBg,

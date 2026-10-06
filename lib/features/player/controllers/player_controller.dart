@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:media_kit/media_kit.dart';
@@ -59,6 +60,21 @@ class PlayerController extends GetxController {
   List<int> get seasons =>
       (episodes.map((e) => e.seasonNumber ?? 1).toSet().toList()..sort());
 
+  /// To'liq ekranga kirish: avval yo'nalishni, keyin tizim panellarini o'zgartiramiz —
+  /// bir vaqtda qilinsa Android ikki marta qayta chizadi va o'tish "sakraydi".
+  static Future<void> enterFullscreen() async {
+    await SystemChrome.setPreferredOrientations(
+        [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
+  /// To'liq ekrandan chiqish: to'g'ridan-to'g'ri vertikalga (media_kit standarti yo'nalishni
+  /// erkin qoldirardi va sahifa bir lahza "qaysi tomonga burilay" deb sakrab olardi).
+  static Future<void> exitFullscreen() async {
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
+  }
+
   /// "Barcha qism" tabidagi son — tanlangan fasldagi qismlar.
   int get visibleEpisodesCount => selectedSeason.value == null
       ? episodes.length
@@ -82,6 +98,9 @@ class PlayerController extends GetxController {
     videoController = VideoController(player);
     // Video ko'rsatilayotgan paytda skrinshot va ekran yozuvi taqiqlanadi.
     SecureScreen.enable();
+    // Pleyer sahifasi doim vertikal: gorizontal faqat to'liq ekran tugmasi orqali.
+    // (Aks holda telefon burilganda sahifa o'zini qayta qurib, o'tish sekin va notekis ko'rinadi.)
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
     // Arguments: {seriesId, episodeId?, title?} yoki eski usulda faqat seriesId (int).
     final args = Get.arguments;
@@ -362,6 +381,9 @@ class PlayerController extends GetxController {
   @override
   void onClose() {
     SecureScreen.disable();
+    // Boshqa sahifalar uchun cheklovni olib tashlaymiz va tizim panellarini qaytaramiz.
+    SystemChrome.setPreferredOrientations([]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     _progressTimer?.cancel();
     _completedSub?.cancel();
     _bufferingSub?.cancel();
