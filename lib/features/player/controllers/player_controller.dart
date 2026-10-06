@@ -20,8 +20,9 @@ import '../../../core/utils/secure_screen.dart';
 class VideoQuality {
   final int height;
   final String url;
+  final int width;
 
-  const VideoQuality(this.height, this.url);
+  const VideoQuality(this.height, this.url, {this.width = 0});
 
   String get label => '${height}p';
 
@@ -32,10 +33,11 @@ class VideoQuality {
     final result = <VideoQuality>[];
     for (var i = 0; i < lines.length - 1; i++) {
       if (!lines[i].startsWith('#EXT-X-STREAM-INF')) continue;
-      final res = RegExp(r'RESOLUTION=\d+x(\d+)').firstMatch(lines[i]);
+      final res = RegExp(r'RESOLUTION=(\d+)x(\d+)').firstMatch(lines[i]);
       final uri = lines[i + 1];
       if (res == null || uri.isEmpty || uri.startsWith('#')) continue;
-      result.add(VideoQuality(int.parse(res.group(1)!), uri.startsWith('http') ? uri : base + uri));
+      result.add(VideoQuality(int.parse(res.group(2)!), uri.startsWith('http') ? uri : base + uri,
+          width: int.parse(res.group(1)!)));
     }
     result.sort((a, b) => b.height.compareTo(a.height));
     return result;
@@ -99,7 +101,6 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     super.onInit();
     player = Player();
     videoController = VideoController(player);
-    _tuneMpv();
     // Video ko'rsatilayotgan paytda skrinshot va ekran yozuvi taqiqlanadi.
     SecureScreen.enable();
     // Pleyer sahifasi doim vertikal: gorizontal faqat to'liq ekran tugmasi orqali.
@@ -223,6 +224,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
       return;
     }
     final sw = Stopwatch()..start();
+    _logFirstFrame(sw);
     // Oldingi qism joyini saqlash videoni ochishni kutdirmasin (ma'lumot sinxron olinadi).
     _saveProgress();
     currentEpisode.value = episode;
@@ -259,9 +261,10 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     _stalls.clear();
 
     final resumeAt = fromStart ? 0 : (episode.watchedSeconds ?? 0);
+    final size = qualities.firstWhereOrNull((q) => q.url == url);
+    if (size != null) await _prepareSurface(size.width, size.height);
     if (!kReleaseMode) debugPrint('[player] tayyorgarlik ${sw.elapsedMilliseconds}ms');
     await _openAt(url, Duration(seconds: resumeAt > 5 ? resumeAt : 0));
-    _logFirstFrame(sw);
     // Keyingi qismning sifatlar ro'yxatini oldindan olib qo'yamiz — u tezroq ochiladi.
     final next = nextEpisode;
     if (next?.videoUrl != null) _loadQualities(next!.videoUrl!);
@@ -399,13 +402,35 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     );
   }
 
-  /// mpv sozlamalari: oqim formatini aniqlash uchun kamroq ma'lumot kutadi —
-  /// video tezroq boshlanadi (HLS bo'laklari doim bir xil formatda).
-  void _tuneMpv() {
+  static const _videoChannel = MethodChannel('com.alexmercerind/media_kit_video');
+
+  /// media_kit Android'da video chiqadigan sirtni faqat video o'lchami ma'lum bo'lgach yaratadi:
+  /// mpv avval videoni "ekransiz" ochadi, sirt paydo bo'lgach esa qayta ochib, dastlabki
+  /// bo'laklarni yana yuklaydi (~1.5 s). O'lchamni master playlist'dan bilamiz — sirtni oldindan
+  /// yaratib, mpv tayyor ekranga ochilguncha kutamiz. O'lcham keyin ham bir xil bo'lgani uchun
+  /// media_kit sirtni qayta yaratmaydi.
+  Future<void> _prepareSurface(int width, int height) async {
+    if (width <= 0 || height <= 0 || !GetPlatform.isAndroid) return;
     final native = player.platform;
     if (native is! NativePlayer) return;
-    native.setProperty('demuxer-lavf-analyzeduration', '0.5');
-    native.setProperty('demuxer-lavf-probesize', '500000');
+    try {
+      // Native VideoOutput yaratilgan bo'lishi shart (VideoController ishga tushgach).
+      await videoController.platform.future.timeout(const Duration(seconds: 2));
+      final handle = await player.handle;
+      await _videoChannel.invokeMethod('VideoOutputManager.SetSurfaceSize', {
+        'handle': handle.toString(),
+        'width': width.toString(),
+        'height': height.toString(),
+      });
+      // mpv video chiqishi (vo) GPU'ga ulanguncha qisqa kutamiz (odatda < 100 ms).
+      for (var i = 0; i < 20; i++) {
+        if (_closed) return;
+        if (await native.getProperty('vo') == 'gpu') return;
+        await Future.delayed(const Duration(milliseconds: 25));
+      }
+    } catch (_) {
+      // Sirtni oldindan tayyorlay olmasak — media_kit o'zi eski usulda tayyorlaydi.
+    }
   }
 
   int _openToken = 0;
