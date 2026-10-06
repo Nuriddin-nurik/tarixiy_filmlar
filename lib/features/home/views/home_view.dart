@@ -73,17 +73,15 @@ class HomeView extends GetView<HomeController> {
               backgroundColor: AppColors.surface,
               onRefresh: controller.fetchHomeData,
               child: ListView(
-                // Suzib turuvchi pastki menyu ostida kontent qolib ketmasligi uchun.
-                padding: EdgeInsets.only(bottom: kFloatingNavSpace),
+                // Banner yuqoridagi xira panel tugagan joydan boshlanadi (aktyor yuzi xira ostida
+                // qolmasin); pastga surilganda esa panel ostiga kiradi.
+                // Pastda — suzib turuvchi menyu ostida kontent qolib ketmasligi uchun joy.
+                padding: EdgeInsets.only(top: _TopBar.heightOf(context), bottom: kFloatingNavSpace),
                 children: [
-                  if (banners.isNotEmpty)
-                    _HeroCarousel(banners: banners)
-                  else
-                    SizedBox(height: MediaQuery.of(context).padding.top + 72.h),
+                  if (banners.isNotEmpty) _HeroCarousel(banners: banners),
 
-                  // Figma tartibi: birinchi janr → "Ko'rishni davom etish" → qolgan janrlar → "Janrlar".
-                  if (genres.isNotEmpty) genreSection(genres.first, 'crown_small'),
-
+                  // Tartib: banner → "Ko'rishni davom etish" (faqat ko'rilgan qism bo'lsa) →
+                  // seriallar (janrlar bo'yicha) → "Janrlar".
                   if (controller.continueWatching.isNotEmpty)
                     Padding(
                       padding: EdgeInsets.only(top: 16.h, bottom: 28.h),
@@ -110,7 +108,9 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ),
 
-                  for (final e in genres.skip(1)) genreSection(e, 'gold_dot'),
+                  for (var i = 0; i < genres.length; i++)
+                    genreSection(genres[i], i == 0 ? 'crown_small' : 'gold_dot',
+                        top: i == 0 && controller.continueWatching.isEmpty ? 16.h : 0),
 
                   if (withoutGenre.isNotEmpty)
                     genreSection(MapEntry('Barcha seriallar'.tr, withoutGenre), 'gold_dot'),
@@ -159,6 +159,9 @@ class HomeView extends GetView<HomeController> {
 /// Figma: "Header (fixed, blur)" — logo, qidiruv va bildirishnoma.
 class _TopBar extends StatelessWidget {
   const _TopBar();
+
+  /// Panel balandligi: status bar + 8 + logo (36) + 16. Banner shu joydan boshlanadi.
+  static double heightOf(BuildContext context) => MediaQuery.of(context).padding.top + 8.h + 36.h + 16.h;
 
   @override
   Widget build(BuildContext context) {
@@ -317,7 +320,8 @@ class _HeroItem extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           AppNetworkImage(banner.image ?? movie?.imagePath, height: height),
-          // Figma: "Overlay" gradienti.
+          // Figma: "Overlay" gradienti. Banner endi panel ostida emas, shuning uchun tepasi
+          // deyarli ochiq (oldin 80% qora edi — aktyor yuzi ko'rinmay qolardi).
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -325,8 +329,8 @@ class _HeroItem extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 stops: const [0, 0.3, 0.6, 0.85, 1],
                 colors: [
-                  AppColors.background.withValues(alpha: 0.8),
-                  AppColors.background.withValues(alpha: 0.25),
+                  AppColors.background.withValues(alpha: 0.15),
+                  AppColors.background.withValues(alpha: 0.05),
                   AppColors.background.withValues(alpha: 0.45),
                   AppColors.background.withValues(alpha: 0.88),
                   AppColors.background,
