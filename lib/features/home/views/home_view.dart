@@ -311,8 +311,11 @@ class _HeroItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final movie = banner.movie;
-    final title = movie?.title ?? banner.seriesTitle ?? '';
-    final subtitle = movie?.genreNames.take(2).join(' • ') ?? '';
+    // Figma'dagi "USMONLI / BUYUK SALTANAT" kabi: birinchi so'z — katta sarlavha,
+    // qolgan so'zlar — ostidagi kichik qator ("Mehmed Fathlar Sultoni" → MEHMED / FATHLAR SULTONI).
+    final words = (movie?.title ?? banner.seriesTitle ?? '').trim().split(RegExp(r'\s+'));
+    final title = words.first;
+    final subtitle = words.skip(1).join(' ');
 
     return GestureDetector(
       onTap: movie == null ? null : () => Get.toNamed(Routes.SERIES_DETAIL, arguments: movie),
@@ -390,7 +393,7 @@ class _HeroItem extends StatelessWidget {
                   Text(
                     subtitle.toUpperCase(),
                     textAlign: TextAlign.center,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: AppFonts.cinzel,
