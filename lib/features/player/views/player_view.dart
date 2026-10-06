@@ -270,9 +270,10 @@ class PlayerView extends GetView<PlayerController> {
       seekBarPositionColor: AppColors.playerAccent,
       seekBarThumbColor: Colors.white,
       seekBarThumbSize: 14,
-      // Chiziq konteyner o'rtasida — oq doira pastki chetdan chiqib, yarmi qirqilmasin.
-      seekBarAlignment: Alignment.center,
-      seekBarMargin: const EdgeInsets.symmetric(horizontal: 14),
+      // media_kit chiziqni pastki tugmalar qatori (56px) bilan bir joyga qo'yadi.
+      // Figma'dagidek chiziq vaqt/720P/to'liq ekran qatorining USTIDA tursin — 42px ko'taramiz.
+      // Shunda oq doira ham video chetidan uzoq bo'ladi va qirqilmaydi.
+      seekBarMargin: const EdgeInsets.fromLTRB(14, 0, 14, 42),
       // Boshqaruvlar tez yashirinsa, media_kit seek bar'ni surish paytida o'chirib yuboradi
       // ("widget has been unmounted" xatosi). Shuning uchun yashirinish vaqtini uzaytiramiz.
       controlsHoverDuration: const Duration(seconds: 5),
