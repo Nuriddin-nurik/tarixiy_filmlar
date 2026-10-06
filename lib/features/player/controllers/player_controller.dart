@@ -371,15 +371,20 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   /// Video ochilayotgan/sakrayotgan payt — bu vaqtdagi yuklanish "to'xtash" hisoblanmaydi.
   DateTime _openedAt = DateTime.fromMillisecondsSinceEpoch(0);
 
+  /// Sahifa yopilib, pleyer yo'q qilingan — undan keyin video ochilmasin.
+  bool _closed = false;
+
   Future<void> _openAt(String url, Duration position) async {
+    // Sifatlar yuklanayotganda foydalanuvchi sahifadan chiqib ketgan bo'lishi mumkin.
+    if (_closed) return;
     final token = ++_openToken;
     _openedAt = DateTime.now();
     await player.open(Media(url), play: true);
     if (position <= Duration.zero) return;
 
     for (var i = 0; i < 100; i++) {
-      // Bu orada boshqa qism/sifat ochilgan bo'lsa — to'xtaymiz.
-      if (token != _openToken) return;
+      // Bu orada boshqa qism/sifat ochilgan yoki sahifa yopilgan bo'lsa — to'xtaymiz.
+      if (token != _openToken || _closed) return;
       final s = player.state;
       if (s.duration > Duration.zero && !s.buffering) {
         await player.seek(position);
@@ -405,6 +410,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
 
   @override
   void onClose() {
+    _closed = true;
     WidgetsBinding.instance.removeObserver(this);
     SecureScreen.disable();
     // Boshqa sahifalar uchun cheklovni olib tashlaymiz va tizim panellarini qaytaramiz.
