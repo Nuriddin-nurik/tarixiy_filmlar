@@ -27,14 +27,23 @@ class AppNetworkImage extends StatelessWidget {
       child: Icon(Icons.movie_outlined, color: AppColors.textMuted, size: 28.sp),
     );
     if (url == null) return fallback;
-    return CachedNetworkImage(
-      imageUrl: url,
-      width: width,
-      height: height,
-      fit: fit,
-      placeholder: (_, __) => Container(width: width, height: height, color: AppColors.surface),
-      errorWidget: (_, __, ___) => fallback,
-    );
+    // Serial rasmlari katta (2-3 MB PNG) — ekrandagi o'lchamiga kichraytirib xotiraga ochamiz.
+    // Aks holda har rasm to'liq o'lchamda dekodlanadi va ro'yxat varaqlanganda qotadi.
+    return LayoutBuilder(builder: (context, constraints) {
+      final dpr = MediaQuery.devicePixelRatioOf(context);
+      final w = width ?? (constraints.hasBoundedWidth ? constraints.maxWidth : null);
+      final cacheWidth = w == null || w <= 0 ? null : (w * dpr).round();
+      return CachedNetworkImage(
+        imageUrl: url,
+        width: width,
+        height: height,
+        fit: fit,
+        memCacheWidth: cacheWidth,
+        fadeInDuration: const Duration(milliseconds: 200),
+        placeholder: (_, __) => Container(width: width, height: height, color: AppColors.surface),
+        errorWidget: (_, __, ___) => fallback,
+      );
+    });
   }
 }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -98,6 +99,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     super.onInit();
     player = Player();
     videoController = VideoController(player);
+    _tuneMpv();
     // Video ko'rsatilayotgan paytda skrinshot va ekran yozuvi taqiqlanadi.
     SecureScreen.enable();
     // Pleyer sahifasi doim vertikal: gorizontal faqat to'liq ekran tugmasi orqali.
@@ -220,25 +222,35 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
       await showUnlockSheetFor(currentSeriesId.value);
       return;
     }
-    await _saveProgress();
+    final sw = Stopwatch()..start();
+    // Oldingi qism joyini saqlash videoni ochishni kutdirmasin (ma'lumot sinxron olinadi).
+    _saveProgress();
     currentEpisode.value = episode;
     qualities.clear();
 
+    // Oflayn fayl, sifatlar ro'yxati, saqlangan sifat va internet turi — hammasi bir vaqtda.
+    final results = await Future.wait<Object?>([
+      Get.find<DownloadController>().playbackUrl(episode.id!),
+      _loadQualities(episode.videoUrl!),
+      _preferredHeight(),
+      Connectivity().checkConnectivity(),
+    ]);
+    if (_closed || currentEpisode.value?.id != episode.id) return;
     // Yuklangan (shifrlangan) bo'lsa — lokal serverdan, internetsiz ijro etamiz.
-    final offlineUrl = await Get.find<DownloadController>().playbackUrl(episode.id!);
+    final offlineUrl = results[0] as String?;
     final isOffline = offlineUrl != null;
 
     String url = offlineUrl ?? episode.videoUrl!;
     playingHeight.value = 0;
     if (!isOffline) {
-      // Sifatlar ro'yxatini olamiz va avval tanlangan sifat bo'lsa, o'shani ochamiz.
-      qualities.value = await _loadQualities(episode.videoUrl!);
-      final preferred = await _preferredHeight();
+      // Avval tanlangan sifat bo'lsa, o'shani ochamiz.
+      qualities.value = results[1] as List<VideoQuality>;
+      final preferred = results[2] as int;
       final match = qualities.firstWhereOrNull((q) => q.height == preferred);
       selectedQuality.value = match?.height ?? 0;
       // "Avto": internet turiga qarab boshlang'ich sifatni o'zimiz tanlaymiz
       // (mpv o'zi har doim eng yuqori sifatni oladi va pasaytirmaydi).
-      final chosen = match ?? await _autoQuality();
+      final chosen = match ?? _autoQualityFor(results[3] as List<ConnectivityResult>);
       if (chosen != null) {
         url = chosen.url;
         playingHeight.value = chosen.height;
@@ -247,7 +259,25 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     _stalls.clear();
 
     final resumeAt = fromStart ? 0 : (episode.watchedSeconds ?? 0);
+    if (kDebugMode) debugPrint('[player] tayyorgarlik ${sw.elapsedMilliseconds}ms');
     await _openAt(url, Duration(seconds: resumeAt > 5 ? resumeAt : 0));
+    _logFirstFrame(sw);
+    // Keyingi qismning sifatlar ro'yxatini oldindan olib qo'yamiz — u tezroq ochiladi.
+    final next = nextEpisode;
+    if (next?.videoUrl != null) _loadQualities(next!.videoUrl!);
+  }
+
+  /// Debug: bosilgandan video haqiqatan o'ynay boshlaguncha qancha vaqt o'tganini yozadi.
+  void _logFirstFrame(Stopwatch sw) {
+    if (!kDebugMode) return;
+    late final StreamSubscription<Duration> sub;
+    sub = player.stream.position.listen((p) {
+      if (p > Duration.zero) {
+        debugPrint('[player] video boshlandi ${sw.elapsedMilliseconds}ms (joy ${p.inSeconds}s)');
+        sub.cancel();
+      }
+    });
+    Future.delayed(const Duration(seconds: 20), () => sub.cancel());
   }
 
   // ───────────── ±10 soniya ─────────────
@@ -292,9 +322,11 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
 
   /// Avto rejimda boshlang'ich sifat: Wi-Fi'da eng yuqorisi (720p gacha),
   /// mobil internetda 480p atrofi — tez-tez to'xtab yuklanmasligi uchun.
-  Future<VideoQuality?> _autoQuality() async {
+  Future<VideoQuality?> _autoQuality() async =>
+      _autoQualityFor(await Connectivity().checkConnectivity());
+
+  VideoQuality? _autoQualityFor(List<ConnectivityResult> net) {
     if (qualities.isEmpty) return null;
-    final net = await Connectivity().checkConnectivity();
     final wifi = net.contains(ConnectivityResult.wifi) || net.contains(ConnectivityResult.ethernet);
     final limit = wifi ? 720 : 480;
     // qualities balanddan pastga tartiblangan.
@@ -353,13 +385,27 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     return prefs.getInt(_qualityPrefsKey) ?? 0;
   }
 
-  Future<List<VideoQuality>> _loadQualities(String masterUrl) async {
-    try {
-      final res = await Dio().get<String>(masterUrl, options: Options(responseType: ResponseType.plain));
-      return VideoQuality.parseMaster(res.data ?? '', masterUrl);
-    } catch (_) {
-      return const [];
-    }
+  // Bitta Dio — CDN bilan ulanish (TLS) qayta ishlatiladi; ro'yxatlar xotirada saqlanadi.
+  static final _http = Dio(BaseOptions(responseType: ResponseType.plain, connectTimeout: const Duration(seconds: 5)));
+  static final _qualityCache = <String, Future<List<VideoQuality>>>{};
+
+  Future<List<VideoQuality>> _loadQualities(String masterUrl) {
+    return _qualityCache[masterUrl] ??= _http.get<String>(masterUrl).then(
+      (res) => VideoQuality.parseMaster(res.data ?? '', masterUrl),
+      onError: (_) {
+        _qualityCache.remove(masterUrl); // xato — keyingi safar qayta urinib ko'ramiz
+        return const <VideoQuality>[];
+      },
+    );
+  }
+
+  /// mpv sozlamalari: oqim formatini aniqlash uchun kamroq ma'lumot kutadi —
+  /// video tezroq boshlanadi (HLS bo'laklari doim bir xil formatda).
+  void _tuneMpv() {
+    final native = player.platform;
+    if (native is! NativePlayer) return;
+    native.setProperty('demuxer-lavf-analyzeduration', '0.5');
+    native.setProperty('demuxer-lavf-probesize', '500000');
   }
 
   int _openToken = 0;
@@ -379,6 +425,10 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     if (_closed) return;
     final token = ++_openToken;
     _openedAt = DateTime.now();
+    final native = player.platform;
+    if (native is NativePlayer) {
+      await native.setProperty('start', position > Duration.zero ? '${position.inSeconds}' : 'none');
+    }
     await player.open(Media(url), play: true);
     if (position <= Duration.zero) return;
 
@@ -387,6 +437,8 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
       if (token != _openToken || _closed) return;
       final s = player.state;
       if (s.duration > Duration.zero && !s.buffering) {
+        // mpv to'g'ridan-to'g'ri kerakli joydan ochgan bo'lsa — sakrash shart emas.
+        if ((s.position - position).inSeconds.abs() <= 5) return;
         await player.seek(position);
         _openedAt = DateTime.now();
         await Future.delayed(const Duration(milliseconds: 400));
