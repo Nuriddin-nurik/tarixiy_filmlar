@@ -10,6 +10,7 @@ import '../../../data/models/episode_model.dart';
 import '../../../data/providers/api_provider.dart';
 import '../../../core/widgets/app_widgets.dart';
 import 'download_controller.dart';
+import '../../../core/utils/secure_screen.dart';
 
 /// HLS sifat varianti (masalan 720p -> .../720p/video.m3u8).
 class VideoQuality {
@@ -79,6 +80,8 @@ class PlayerController extends GetxController {
     super.onInit();
     player = Player();
     videoController = VideoController(player);
+    // Video ko'rsatilayotgan paytda skrinshot va ekran yozuvi taqiqlanadi.
+    SecureScreen.enable();
 
     // Arguments: {seriesId, episodeId?, title?} yoki eski usulda faqat seriesId (int).
     final args = Get.arguments;
@@ -358,6 +361,7 @@ class PlayerController extends GetxController {
 
   @override
   void onClose() {
+    SecureScreen.disable();
     _progressTimer?.cancel();
     _completedSub?.cancel();
     _bufferingSub?.cancel();

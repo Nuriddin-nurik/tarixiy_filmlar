@@ -250,12 +250,15 @@ class PlayerView extends GetView<PlayerController> {
         );
 
     return MaterialVideoControlsThemeData(
-      // Figma: progress 6px, oq 20% fon, #10B981 to'ldirish.
-      seekBarHeight: 6,
-      seekBarColor: Colors.white.withValues(alpha: 0.2),
+      // Vaqt chizig'i aniq ko'rinsin: qalinroq chiziq, ochroq fon va katta tutqich
+      // (Figma: 6px, #10B981 to'ldirish).
+      seekBarHeight: 5,
+      seekBarContainerHeight: 40,
+      seekBarColor: Colors.white.withValues(alpha: 0.35),
+      seekBarBufferColor: Colors.white.withValues(alpha: 0.55),
       seekBarPositionColor: AppColors.playerAccent,
-      seekBarThumbColor: AppColors.playerAccent,
-      seekBarBufferColor: Colors.white.withValues(alpha: 0.3),
+      seekBarThumbColor: Colors.white,
+      seekBarThumbSize: 14,
       seekBarMargin: const EdgeInsets.symmetric(horizontal: 14),
       // Boshqaruvlar tez yashirinsa, media_kit seek bar'ni surish paytida o'chirib yuboradi
       // ("widget has been unmounted" xatosi). Shuning uchun yashirinish vaqtini uzaytiramiz.
@@ -329,51 +332,88 @@ class PlayerView extends GetView<PlayerController> {
     );
   }
 
+  /// Sifat tanlash oynasi. O'lchamlar qat'iy (sp/h emas) — to'liq ekranda (gorizontal)
+  /// ScreenUtil o'lchamlari kattalashib, oyna butun ekranni egallab qolardi.
+  /// Gorizontal rejimda ekran markazida ixcham oyna, vertikalda pastdan chiqadi.
   void _showQualitySheet() {
+    TextStyle st(double size, FontWeight w, Color c) =>
+        TextStyle(fontFamily: AppFonts.notoSerif, fontSize: size, fontWeight: w, color: c, height: 1.3);
+
     Widget option(int height, String label, {String? hint}) {
       return Obx(() {
         final selected = controller.selectedQuality.value == height;
         // Avto rejimda hozir qaysi sifat ishlayotganini ham ko'rsatamiz: "Avto (480p)".
         final playing = controller.playingHeight.value;
         final title = height == 0 && selected && playing > 0 ? '$label (${playing}p)' : label;
-        return ListTile(
+        return InkWell(
           onTap: () {
             Get.back();
             controller.changeQuality(height);
           },
-          title: Text(title, style: _t(15, FontWeight.w500, Colors.white)),
-          subtitle: hint == null ? null : Text(hint, style: _t(11, FontWeight.w400, _muted)),
-          trailing: selected ? const Icon(Icons.check_circle, color: AppColors.playerAccentText) : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: st(14, FontWeight.w500, Colors.white)),
+                      if (hint != null) Text(hint, style: st(11, FontWeight.w400, _muted)),
+                    ],
+                  ),
+                ),
+                if (selected) const Icon(Icons.check_circle, color: AppColors.playerAccentText, size: 20),
+              ],
+            ),
+          ),
         );
       });
     }
 
     final qualities = controller.qualities;
-    Get.bottomSheet(
-      SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 12.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Video sifati'.tr, style: _t(16, FontWeight.w700, AppColors.gold)),
-              SizedBox(height: 8.h),
-              if (qualities.isEmpty)
-                Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Text("Bu video uchun sifat tanlab bo'lmaydi".tr, style: _t(13, FontWeight.w400, _muted)),
-                )
-              else ...[
-                option(0, 'Avto'.tr, hint: "Internet tezligiga qarab avtomatik".tr),
-                for (final q in qualities) option(q.height, q.label, hint: q.height >= 720 ? 'HD' : null),
-              ],
-            ],
+    final content = SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Video sifati'.tr, style: st(15, FontWeight.w700, AppColors.gold)),
+          const SizedBox(height: 6),
+          if (qualities.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text("Bu video uchun sifat tanlab bo'lmaydi".tr, style: st(13, FontWeight.w400, _muted)),
+            )
+          else ...[
+            option(0, 'Avto'.tr, hint: "Internet tezligiga qarab avtomatik".tr),
+            for (final q in qualities) option(q.height, q.label, hint: q.height >= 720 ? 'HD' : null),
+          ],
+        ],
+      ),
+    );
+
+    final landscape = MediaQuery.of(Get.context!).orientation == Orientation.landscape;
+    if (landscape) {
+      Get.dialog(
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 300, maxHeight: 320),
+            child: Material(
+              color: AppColors.playerCard,
+              borderRadius: BorderRadius.circular(16),
+              clipBehavior: Clip.antiAlias,
+              child: content,
+            ),
           ),
         ),
-      ),
-      backgroundColor: AppColors.playerCard,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
-    );
+      );
+    } else {
+      Get.bottomSheet(
+        SafeArea(child: content),
+        backgroundColor: AppColors.playerCard,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      );
+    }
   }
 
   /// Figma: "Episode / ..." kartochkasi.
