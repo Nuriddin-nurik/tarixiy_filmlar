@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:media_kit/media_kit.dart';
@@ -11,6 +12,7 @@ import '../../../data/models/episode_model.dart';
 import '../../../data/providers/api_provider.dart';
 import '../../../core/widgets/app_widgets.dart';
 import 'download_controller.dart';
+import '../../subscription/widgets/unlock_sheet.dart';
 import '../../../core/utils/secure_screen.dart';
 
 /// HLS sifat varianti (masalan 720p -> .../720p/video.m3u8).
@@ -39,7 +41,7 @@ class VideoQuality {
   }
 }
 
-class PlayerController extends GetxController {
+class PlayerController extends GetxController with WidgetsBindingObserver {
   final ApiProvider _apiProvider = ApiProvider();
 
   late final Player player;
@@ -101,6 +103,7 @@ class PlayerController extends GetxController {
     // Pleyer sahifasi doim vertikal: gorizontal faqat to'liq ekran tugmasi orqali.
     // (Aks holda telefon burilganda sahifa o'zini qayta qurib, o'tish sekin va notekis ko'rinadi.)
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    WidgetsBinding.instance.addObserver(this);
 
     // Arguments: {seriesId, episodeId?, title?} yoki eski usulda faqat seriesId (int).
     final args = Get.arguments;
@@ -144,7 +147,11 @@ class PlayerController extends GetxController {
 
   Future<void> _playNext() async {
     final next = nextEpisode;
-    if (next == null) return;
+    if (next == null) {
+      // Bepul qism tugadi, keyingilari qulfli — to'lov oynasini taklif qilamiz.
+      if (_hasLockedAfterCurrent) showUnlockSheetFor(currentSeriesId.value);
+      return;
+    }
     // Tugagan qismni "to'liq ko'rildi" deb saqlaymiz.
     await _saveProgress();
     appSnack('Keyingi qism'.tr, next.title ?? '@n-qism'.trParams({'n': '${next.episodeNumber}'}),
@@ -190,9 +197,27 @@ class PlayerController extends GetxController {
     }
   }
 
+  bool get _hasLockedAfterCurrent {
+    final current = currentEpisode.value;
+    if (current == null) return false;
+    int key(EpisodeModel e) => (e.seasonNumber ?? 1) * 100000 + (e.episodeNumber ?? 0);
+    return episodes.any((e) => !e.canWatch && key(e) > key(current));
+  }
+
+  /// To'lov sahifasidan qaytganda qismlar ro'yxatini yangilaymiz — to'lov o'tgan bo'lsa
+  /// qulflar darhol ochiladi. Hozir o'ynayotgan video to'xtamaydi.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || currentSeriesId.value == 0) return;
+    _apiProvider.getEpisodes(currentSeriesId.value).then((list) {
+      if (list.isNotEmpty) episodes.value = list;
+    }).catchError((_) {});
+  }
+
   Future<void> playEpisode(EpisodeModel episode, {bool fromStart = false}) async {
     if (!episode.canWatch || episode.videoUrl == null) {
-      appSnack('Qism yopiq'.tr, "Bu qismni ko'rish uchun obuna bo'ling".tr);
+      // Qulfli qism — xabar o'rniga to'g'ridan-to'g'ri to'lov oynasi.
+      await showUnlockSheetFor(currentSeriesId.value);
       return;
     }
     await _saveProgress();
@@ -380,6 +405,7 @@ class PlayerController extends GetxController {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     SecureScreen.disable();
     // Boshqa sahifalar uchun cheklovni olib tashlaymiz va tizim panellarini qaytaramiz.
     SystemChrome.setPreferredOrientations([]);

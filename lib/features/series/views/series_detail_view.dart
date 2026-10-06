@@ -3,12 +3,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_widgets.dart';
 import '../../../data/models/series_details_model.dart';
 import '../../subscription/widgets/purchase_sheet.dart';
+import '../../subscription/widgets/unlock_sheet.dart';
 import '../controllers/series_detail_controller.dart';
 
 /// Serial sahifasi — Figma: "03 Serial tafsilotlari" (node 1:32).
@@ -48,7 +50,10 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
         final details = controller.details.value;
         final parts = details?.parts ?? const <EpisodePartModel>[];
         final hasAccess = details?.hasAccess ?? false;
-        final free = series.freeEpisodesCount ?? 0;
+        final tgUrl = details?.telegramFreeUrl ?? series.telegramFreeUrl;
+        final tgCount = details?.telegramFreeCount ?? series.telegramFreeCount ?? 0;
+        // Pullik qismlar qaysi raqamdan boshlanadi (birinchi qism bepul, qolgani pullik).
+        final firstPaid = parts.firstWhereOrNull((p) => !p.free)?.episodeNumber;
 
         return Stack(
           children: [
@@ -124,14 +129,14 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                           ],
                         ),
 
-                        if (free > 0 && !hasAccess) ...[
+                        if (tgUrl != null && !hasAccess) ...[
                           SizedBox(height: 16.h),
-                          _freeCard(free),
+                          _telegramCard(tgUrl, tgCount),
                         ],
 
                         if (details != null && !hasAccess) ...[
                           SizedBox(height: 12.h),
-                          _paidCard(free, parts.length),
+                          _paidCard(firstPaid, parts.length),
                         ],
                       ],
                     ),
@@ -152,7 +157,13 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                         textAlign: TextAlign.center, style: _t(13, FontWeight.w400, AppColors.textSecondary)),
                   )
                 else
-                  ...parts.map((p) => _EpisodeTile(part: p, onTap: () => _openPlayer(episodeId: p.episodeId))),
+                  ...parts.map((p) => _EpisodeTile(
+                        part: p,
+                        // Qulfli qism — pleyer emas, to'g'ridan-to'g'ri to'lov oynasi.
+                        onTap: () => !p.hasAccess && !p.free
+                            ? showUnlockSheet(series, controller.plans)
+                            : _openPlayer(episodeId: p.episodeId),
+                      )),
               ],
             ),
 
@@ -194,7 +205,22 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
       );
 
   /// Figma: "Bepul qismlar" — chapda yashil chiziq.
-  Widget _freeCard(int free) {
+  Future<void> _openTelegram(String url) async {
+    final uri = Uri.tryParse(url.startsWith('http') ? url : 'https://$url');
+    if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      appSnack('Xato'.tr, "Havolani ochib bo'lmadi".tr);
+    }
+  }
+
+  /// Qo'shimcha bepul qismlar Telegram kanalda — kartochka bosilsa kanal ochiladi.
+  Widget _telegramCard(String url, int count) {
+    return GestureDetector(
+      onTap: () => _openTelegram(url),
+      child: _freeCardBody(count),
+    );
+  }
+
+  Widget _freeCardBody(int count) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12.r),
       child: Container(
@@ -232,7 +258,7 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    'Dastlabki @n ta qism BEPUL'.trParams({'n': '$free'}),
+                                    count > 0 ? '@n ta qism BEPUL'.trParams({'n': '$count'}) : 'Bepul qismlar'.tr,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: _t(12, FontWeight.w700, Colors.white, height: 16 / 12),
@@ -243,7 +269,7 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                               ],
                             ),
                             Text(
-                              "Obunasiz to'liq tomosha qiling".tr,
+                              'Telegram kanalimizda tomosha qiling'.tr,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: _t(10, FontWeight.w400, Colors.white.withValues(alpha: 0.6), height: 1.5),
@@ -257,8 +283,7 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                           color: _green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6.r),
                         ),
-                        child: Text('1–@n qism'.trParams({'n': '$free'}),
-                            style: _t(11, FontWeight.w600, _green, height: 16 / 11)),
+                        child: Text('Telegram', style: _t(11, FontWeight.w600, _green, height: 16 / 11)),
                       ),
                     ],
                   ),
@@ -272,7 +297,7 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
   }
 
   /// Figma: "Pullik bo'limlar" — obuna va shu serialni sotib olish variantlari.
-  Widget _paidCard(int free, int partCount) {
+  Widget _paidCard(int? firstPaid, int partCount) {
     final series = controller.series;
     // Obuna faqat obuna tarifidagi seriallarni ochadi — boshqa seriallarda bu variant ko'rsatilmaydi.
     final plan = series.subscriptionBased == true
@@ -305,14 +330,14 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                   ],
                 ),
               ),
-              if (free > 0)
+              if (firstPaid != null)
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(4.r),
                   ),
-                  child: Text('@n-qismdan boshlab'.trParams({'n': '${free + 1}'}),
+                  child: Text('@n-qismdan boshlab'.trParams({'n': '$firstPaid'}),
                       style: _t(10, FontWeight.w400, Colors.white.withValues(alpha: 0.5), height: 1.5)),
                 ),
             ],

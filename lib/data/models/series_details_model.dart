@@ -44,6 +44,8 @@ class SeriesDetailsModel {
   final int likeCount;
   final bool liked;
   final int viewCount;
+  final String? telegramFreeUrl;
+  final int? telegramFreeCount;
 
   SeriesDetailsModel({
     this.id,
@@ -53,6 +55,8 @@ class SeriesDetailsModel {
     this.likeCount = 0,
     this.liked = false,
     this.viewCount = 0,
+    this.telegramFreeUrl,
+    this.telegramFreeCount,
   });
 
   factory SeriesDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -66,6 +70,8 @@ class SeriesDetailsModel {
       likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
       liked: json['liked'] ?? false,
       viewCount: (json['viewCount'] as num?)?.toInt() ?? 0,
+      telegramFreeUrl: json['telegramFreeUrl'],
+      telegramFreeCount: (json['telegramFreeCount'] as num?)?.toInt(),
     );
   }
 

@@ -159,6 +159,11 @@ const Map<String, String> _ru = {
   "Wi-Fi ulanmagan. Yuklash ~@size mobil trafik sarflaydi. Davom etasizmi?":
       "Wi-Fi не подключён. Загрузка израсходует ~@size мобильного трафика. Продолжить?",
   "To'lov qabul qilindi": "Оплата получена",
+  '@n ta qism BEPUL': '@n серий БЕСПЛАТНО',
+  'Bepul qismlar': 'Бесплатные серии',
+  'Telegram kanalimizda tomosha qiling': 'Смотрите в нашем Telegram-канале',
+  "Havolani ochib bo'lmadi": 'Не удалось открыть ссылку',
+  "Internetni tekshirib, qayta urinib ko'ring": 'Проверьте интернет и попробуйте снова',
   "Barcha qismlar ochildi. Yoqimli tomosha!": "Все серии открыты. Приятного просмотра!",
   "Premium obuna faol": "Премиум подписка активна",
   "@kun kun qoldi • @sana gacha": "Осталось @kun дн. • до @sana",

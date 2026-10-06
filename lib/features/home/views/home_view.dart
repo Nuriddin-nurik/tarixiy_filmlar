@@ -546,8 +546,8 @@ class SeriesPosterCard extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     AppNetworkImage(series.imagePath),
-                    // Figma: "Badge / Yangi" — biz bepul qismlari bor seriallarni belgilaymiz.
-                    if ((series.freeEpisodesCount ?? 0) > 0)
+                    // Figma: "Badge / Yangi" — Telegram'da bepul qismlari bor seriallarni belgilaymiz.
+                    if (series.telegramFreeUrl != null)
                       Positioned(
                         top: 7.h,
                         left: 7.w,

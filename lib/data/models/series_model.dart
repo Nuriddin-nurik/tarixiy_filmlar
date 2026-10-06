@@ -18,7 +18,9 @@ class SeriesModel {
   final bool? hasEpisode;
   final int? viewCount;
   final List<GenreModel> genres;
-  final int? freeEpisodesCount;
+  /// Qo'shimcha bepul qismlar joylangan Telegram kanal (bo'sh = yo'q) va u yerdagi qismlar soni.
+  final String? telegramFreeUrl;
+  final int? telegramFreeCount;
   final int? monthlyPrice;
   final int? quarterlyPrice;
   /// true — umumiy obuna orqali ochiladi; aks holda faqat alohida sotib olinadi.
@@ -33,7 +35,8 @@ class SeriesModel {
     this.hasEpisode,
     this.viewCount,
     this.genres = const [],
-    this.freeEpisodesCount,
+    this.telegramFreeUrl,
+    this.telegramFreeCount,
     this.monthlyPrice,
     this.quarterlyPrice,
     this.subscriptionBased,
@@ -51,7 +54,8 @@ class SeriesModel {
       genres: json['genres'] != null
           ? (json['genres'] as List).map((g) => GenreModel.fromJson(g)).toList()
           : const [],
-      freeEpisodesCount: json['freeEpisodesCount'],
+      telegramFreeUrl: json['telegramFreeUrl'],
+      telegramFreeCount: json['telegramFreeCount'],
       monthlyPrice: json['monthlyPrice'],
       quarterlyPrice: json['quarterlyPrice'],
       subscriptionBased: json['subscriptionBased'],
