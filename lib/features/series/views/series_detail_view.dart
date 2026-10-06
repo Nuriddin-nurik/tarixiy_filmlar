@@ -129,7 +129,8 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                           ],
                         ),
 
-                        if (tgUrl != null && !hasAccess) ...[
+                        // Telegram kartochkasi hammaga — sotib olganlarga ham ko'rinadi.
+                        if (tgUrl != null) ...[
                           SizedBox(height: 16.h),
                           _telegramCard(tgUrl, tgCount),
                         ],
