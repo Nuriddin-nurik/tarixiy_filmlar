@@ -259,7 +259,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     _stalls.clear();
 
     final resumeAt = fromStart ? 0 : (episode.watchedSeconds ?? 0);
-    if (kDebugMode) debugPrint('[player] tayyorgarlik ${sw.elapsedMilliseconds}ms');
+    if (!kReleaseMode) debugPrint('[player] tayyorgarlik ${sw.elapsedMilliseconds}ms');
     await _openAt(url, Duration(seconds: resumeAt > 5 ? resumeAt : 0));
     _logFirstFrame(sw);
     // Keyingi qismning sifatlar ro'yxatini oldindan olib qo'yamiz — u tezroq ochiladi.
@@ -269,7 +269,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
 
   /// Debug: bosilgandan video haqiqatan o'ynay boshlaguncha qancha vaqt o'tganini yozadi.
   void _logFirstFrame(Stopwatch sw) {
-    if (!kDebugMode) return;
+    if (kReleaseMode) return;
     late final StreamSubscription<Duration> sub;
     sub = player.stream.position.listen((p) {
       if (p > Duration.zero) {
