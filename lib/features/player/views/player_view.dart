@@ -43,6 +43,18 @@ class PlayerView extends GetView<PlayerController> {
       ),
     );
 
+    // Sahifa vertikalga qulflangan, shuning uchun gorizontal o'lcham faqat to'liq ekran
+    // oynasi ochiq paytda keladi. Shu paytda ostidagi sahifa hech narsa chizmaydi —
+    // aks holda u ham qayta quriladi (sig'may qoladi va o'tishni sekinlashtiradi).
+    // Video widget'i daraxtda qoladi (media_kit to'liq ekrandan chiqishda uning holatidan
+    // foydalanadi), lekin Offstage — chizilmaydi.
+    if (MediaQuery.of(context).orientation == Orientation.landscape) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Offstage(child: AspectRatio(aspectRatio: 16 / 9, child: video)),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.playerBg,
       body: SafeArea(
