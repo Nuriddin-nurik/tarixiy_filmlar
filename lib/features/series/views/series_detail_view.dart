@@ -100,10 +100,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                           label: 'Tomosha qilish'.tr,
                           onTap: () => _openPlayer(episodeId: controller.resumeEpisodeId),
                         ),
-                        if (tgUrl != null) ...[
-                          SizedBox(height: 12.h),
-                          _TelegramBanner(count: tgCount, onTap: () => _openTelegram(tgUrl)),
-                        ],
                         SizedBox(height: 12.h),
 
                         Row(
@@ -125,6 +121,11 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                             ),
                           ],
                         ),
+
+                        if (tgUrl != null) ...[
+                          SizedBox(height: 16.h),
+                          _TelegramBanner(count: tgCount, onTap: () => _openTelegram(tgUrl)),
+                        ],
 
                         if (details != null && !hasAccess) ...[
                           SizedBox(height: 12.h),
@@ -148,13 +149,20 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                     child: Text("Hozircha qismlar yo'q".tr,
                         textAlign: TextAlign.center, style: _t(13, FontWeight.w400, AppColors.textSecondary)),
                   )
-                else
+                else ...[
+                  if (tgUrl != null)
+                    _TelegramEpisodeTile(
+                      count: tgCount,
+                      firstEpisode: parts.map((p) => p.episodeNumber ?? 0).reduce((a, b) => a < b ? a : b),
+                      onTap: () => _openTelegram(tgUrl),
+                    ),
                   ...parts.map((p) => _EpisodeTile(
                         part: p,
                         onTap: () => !p.hasAccess && !p.free
                             ? showUnlockSheet(series, controller.plans)
                             : _openPlayer(episodeId: p.episodeId),
                       )),
+                ],
               ],
             ),
 
@@ -645,6 +653,70 @@ class _EpisodeTile extends StatelessWidget {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TelegramEpisodeTile extends StatelessWidget {
+  const _TelegramEpisodeTile({required this.count, required this.firstEpisode, required this.onTap});
+  final int count;
+  final int firstEpisode;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const blue = Color(0xFF229ED9);
+    final lastFree = count > 0 ? count : firstEpisode - 1;
+    final title = count > 0 ? '@n ta qism bepul'.trParams({'n': '$count'}) : 'Bepul qismlar'.tr;
+    final range = lastFree > 1 ? '1–@n-qismlar'.trParams({'n': '$lastFree'}) : null;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+        child: Row(
+          children: [
+            Container(
+              width: 120.w,
+              height: 68.h,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8.r),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2AABEE), blue],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Transform.rotate(
+                angle: -0.6,
+                child: Icon(Icons.send_rounded, color: Colors.white, size: 26.sp),
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontFamily: AppFonts.jakarta, color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.w700),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    [if (range != null) range, "Telegram kanalida".tr].join(' • '),
+                    style: TextStyle(fontFamily: AppFonts.jakarta, color: blue, fontSize: 11.sp, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: blue, size: 22.sp),
           ],
         ),
       ),
