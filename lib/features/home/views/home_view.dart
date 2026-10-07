@@ -546,30 +546,6 @@ class SeriesPosterCard extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     AppNetworkImage(series.imagePath),
-                    // Figma: "Badge / Yangi" — Telegram'da bepul qismlari bor seriallarni belgilaymiz.
-                    if (series.telegramFreeUrl != null)
-                      Positioned(
-                        top: 7.h,
-                        left: 7.w,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                          decoration: BoxDecoration(
-                            color: AppColors.green,
-                            borderRadius: BorderRadius.circular(4.r),
-                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 6, offset: const Offset(0, 4))],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AppIcon('badge_star', size: 8.w),
-                              SizedBox(width: 4.w),
-                              Text('Bepul'.tr,
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 10.sp, fontWeight: FontWeight.w600, height: 1.5)),
-                            ],
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),
