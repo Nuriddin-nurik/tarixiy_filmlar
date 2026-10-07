@@ -45,7 +45,7 @@ class HomeView extends GetView<HomeController> {
         final data = controller.homeData.value;
         final banners = data?.banners ?? const <BannerModel>[];
         final genres = controller.seriesByGenre.entries.toList();
-        final withoutGenre = controller.series.where((s) => s.genreNames.isEmpty).toList();
+        final all = controller.series;
         void openCatalog() => Get.find<MainController>().changePage(1);
 
         Widget genreSection(MapEntry<String, List<SeriesModel>> e, String icon, {double top = 0}) => Padding(
@@ -102,12 +102,11 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ),
 
-                  for (var i = 0; i < genres.length; i++)
-                    genreSection(genres[i], i == 0 ? 'crown_small' : 'gold_dot',
-                        top: i == 0 && controller.continueWatching.isEmpty ? 16.h : 0),
+                  if (all.isNotEmpty)
+                    genreSection(MapEntry('Barcha seriallar'.tr, all), 'crown_small',
+                        top: controller.continueWatching.isEmpty ? 16.h : 0),
 
-                  if (withoutGenre.isNotEmpty)
-                    genreSection(MapEntry('Barcha seriallar'.tr, withoutGenre), 'gold_dot'),
+                  for (var i = 0; i < genres.length; i++) genreSection(genres[i], 'gold_dot'),
 
                   if (genres.isNotEmpty)
                     Padding(
