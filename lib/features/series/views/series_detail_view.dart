@@ -100,6 +100,10 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                           label: 'Tomosha qilish'.tr,
                           onTap: () => _openPlayer(episodeId: controller.resumeEpisodeId),
                         ),
+                        if (tgUrl != null) ...[
+                          SizedBox(height: 12.h),
+                          _TelegramBanner(count: tgCount, onTap: () => _openTelegram(tgUrl)),
+                        ],
                         SizedBox(height: 12.h),
 
                         Row(
@@ -121,11 +125,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                             ),
                           ],
                         ),
-
-                        if (tgUrl != null) ...[
-                          SizedBox(height: 16.h),
-                          _telegramCard(tgUrl, tgCount),
-                        ],
 
                         if (details != null && !hasAccess) ...[
                           SizedBox(height: 12.h),
@@ -200,89 +199,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
     if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       appSnack('Xato'.tr, "Havolani ochib bo'lmadi".tr);
     }
-  }
-
-  Widget _telegramCard(String url, int count) {
-    return GestureDetector(
-      onTap: () => _openTelegram(url),
-      child: _freeCardBody(count),
-    );
-  }
-
-  Widget _freeCardBody(int count) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12.r),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF161A1A).withValues(alpha: 0.7),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(width: 4.w, color: _green),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 32.w,
-                        height: 32.w,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: _green.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: AppIcon('gift', size: 14.w),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    count > 0 ? '@n ta qism BEPUL'.trParams({'n': '$count'}) : 'Bepul qismlar'.tr,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: _t(12, FontWeight.w700, Colors.white, height: 16 / 12),
-                                  ),
-                                ),
-                                SizedBox(width: 6.w),
-                                AppIcon('live_dot', size: 8.w),
-                              ],
-                            ),
-                            Text(
-                              'Telegram kanalimizda tomosha qiling'.tr,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: _t(10, FontWeight.w400, Colors.white.withValues(alpha: 0.6), height: 1.5),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                        decoration: BoxDecoration(
-                          color: _green.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
-                        child: Text('Telegram', style: _t(11, FontWeight.w600, _green, height: 16 / 11)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _paidCard(int? firstPaid, int partCount) {
@@ -736,3 +652,109 @@ class _EpisodeTile extends StatelessWidget {
   }
 }
 
+class _TelegramBanner extends StatefulWidget {
+  const _TelegramBanner({required this.count, required this.onTap});
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  State<_TelegramBanner> createState() => _TelegramBannerState();
+}
+
+class _TelegramBannerState extends State<_TelegramBanner> with SingleTickerProviderStateMixin {
+  static const _blue = Color(0xFF229ED9);
+  static const _blueLight = Color(0xFF2AABEE);
+
+  late final AnimationController _glow =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1600))..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _glow.dispose();
+    super.dispose();
+  }
+
+  TextStyle _style(double size, FontWeight w, Color c) =>
+      TextStyle(fontFamily: AppFonts.jakarta, fontSize: size.sp, fontWeight: w, color: c, height: 1.3);
+
+  @override
+  Widget build(BuildContext context) {
+    final title = widget.count > 0
+        ? "@n ta qism Telegram'da BEPUL".trParams({'n': '${widget.count}'})
+        : "Bepul qismlar Telegram'da".tr;
+    return AnimatedBuilder(
+      animation: _glow,
+      builder: (_, child) => Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14.r),
+          boxShadow: [
+            BoxShadow(
+              color: _blue.withValues(alpha: 0.25 + 0.3 * _glow.value),
+              blurRadius: 12 + 14 * _glow.value,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: child,
+      ),
+      child: Material(
+        borderRadius: BorderRadius.circular(14.r),
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(colors: [_blueLight, _blue], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          ),
+          child: InkWell(
+            onTap: widget.onTap,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 40.w,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
+                    child: Transform.rotate(
+                      angle: -0.6,
+                      child: Icon(Icons.send_rounded, color: Colors.white, size: 20.w),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: _style(14, FontWeight.w800, Colors.white)),
+                        SizedBox(height: 2.h),
+                        Text(
+                          "Kanalga o'ting va bepul tomosha qiling".tr,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: _style(11, FontWeight.w500, Colors.white.withValues(alpha: 0.85)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20.r)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("O'tish".tr, style: _style(12, FontWeight.w700, _blue)),
+                        SizedBox(width: 2.w),
+                        Icon(Icons.arrow_forward_rounded, color: _blue, size: 14.w),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
