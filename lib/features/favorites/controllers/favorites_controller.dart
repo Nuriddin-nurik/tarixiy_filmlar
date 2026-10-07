@@ -9,14 +9,12 @@ class FavoritesController extends GetxController {
   var favorites = <SeriesModel>[].obs;
   var isLoading = false.obs;
 
-  /// Foydalanuvchi like bosgan seriallar (backend: GET /series/liked).
   Future<void> load() async {
     if (isLoading.value) return;
     try {
       isLoading(true);
       favorites.value = await _apiProvider.getLikedSeries();
     } catch (_) {
-      // Xato bo'lsa oldingi ro'yxat qoladi.
     } finally {
       isLoading(false);
     }

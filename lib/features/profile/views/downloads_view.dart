@@ -7,8 +7,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_widgets.dart';
 import '../../player/controllers/download_controller.dart';
 
-/// Yuklab olingan qismlar ro'yxati.
-/// Fayllar ilovaning yopiq papkasida saqlanadi — galereya yoki fayl menejerida ko'rinmaydi.
 class DownloadsView extends GetView<DownloadController> {
   const DownloadsView({super.key});
 

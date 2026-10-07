@@ -7,9 +7,6 @@ import '../../../data/models/subscription_models.dart';
 import '../../../data/providers/api_provider.dart';
 import 'purchase_sheet.dart';
 
-/// Qulfli qism bosilganda — darhol to'lov oynasi.
-/// Serialning o'z narxi bo'lsa — shu serialni sotib olish; obuna seriali bo'lsa — obuna tarifi;
-/// hech biri bo'lmasa — obuna sahifasi.
 Future<void> showUnlockSheet(SeriesModel series, List<SubscriptionPlanModel> plans) async {
   if (series.monthlyPrice != null || series.quarterlyPrice != null) {
     await showPurchaseSheet(
@@ -33,7 +30,6 @@ Future<void> showUnlockSheet(SeriesModel series, List<SubscriptionPlanModel> pla
   await Get.toNamed(Routes.SUBSCRIPTION);
 }
 
-/// Faqat serial id'si ma'lum bo'lgan joylar uchun (pleyer): serial va tariflarni yuklab, so'ng ochadi.
 Future<void> showUnlockSheetFor(int seriesId) async {
   final api = ApiProvider();
   try {

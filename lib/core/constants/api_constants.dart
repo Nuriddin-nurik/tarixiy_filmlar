@@ -1,7 +1,6 @@
 class ApiConstants {
   static const String baseUrl = 'https://api.tarixiykinolar.uz';
 
-  // Endpoints
   static const String signIn = '/auth/sign-in';
   static const String logout = '/auth/logout';
   static const String refresh = '/auth/refresh';

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Figma dizaynidagi ranglar (fayl: "Tarixiy Kinolar").
 class AppColors {
   static const background = Color(0xFF0B0D0E);
   static const surface = Color(0xFF141619);
@@ -12,12 +11,10 @@ class AppColors {
   static const gold = Color(0xFFD4AF37);
   static const goldDark = Color(0xFFB08D2C);
 
-  // Serial sahifasidagi (Figma 03) ranglar — bu ekranda yashil va oltin biroz boshqacha.
   static const seriesGreen = Color(0xFF00A86B);
   static const seriesBg = Color(0xFF0C0F0E);
   static const seriesGold = Color(0xFFE6BF55);
 
-  // Pleyer ekranidagi (Figma 04) ranglar.
   static const playerBg = Color(0xFF0B0C10);
   static const playerPanel = Color(0xFF101217);
   static const playerCard = Color(0xFF13151B);
@@ -32,10 +29,9 @@ class AppColors {
   static const danger = Color(0xFFEF4444);
 }
 
-/// Figma'dagi shriftlar.
 class AppFonts {
   static const inter = 'Inter';
   static const cinzel = 'Cinzel';
-  static const jakarta = 'PlusJakartaSans'; // kirish va serial ekranlari
-  static const notoSerif = 'NotoSerif'; // pleyer ekrani
+  static const jakarta = 'PlusJakartaSans';
+  static const notoSerif = 'NotoSerif';
 }

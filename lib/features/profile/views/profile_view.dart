@@ -16,9 +16,6 @@ import '../../../core/widgets/app_widgets.dart';
 import '../../../data/models/subscription_models.dart';
 import '../../main/views/main_view.dart';
 
-/// Profil — Figma: "05 Profil" (node 1:162).
-/// Profil tab ekrani, shuning uchun dizayndagi "Orqaga" tugmasi qo'yilmagan;
-/// "Tahrirlash" (✎) hisob ma'lumotlarini ochadi.
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
 
@@ -28,7 +25,6 @@ class ProfileView extends GetView<ProfileController> {
   Future<void> _openSupport() async {
     final app = Uri.parse('tg://resolve?domain=${AppConfig.supportTelegram}');
     final web = Uri.parse('https://t.me/${AppConfig.supportTelegram}');
-    // Telegram o'rnatilgan bo'lsa ilovada, bo'lmasa brauzerda ochiladi.
     if (!await launchUrl(app, mode: LaunchMode.externalApplication)) {
       await launchUrl(web, mode: LaunchMode.externalApplication);
     }
@@ -40,7 +36,6 @@ class ProfileView extends GetView<ProfileController> {
       backgroundColor: _bg,
       body: SafeArea(
         child: Obx(() {
-          // HomeController dagi ma'lumot yangilansa profil ham yangilanadi.
           Get.find<HomeController>().homeData.value;
           final user = controller.user;
           final name = (user?.username?.isNotEmpty ?? false) ? user!.username! : 'Mehmon'.tr;
@@ -49,7 +44,6 @@ class ProfileView extends GetView<ProfileController> {
           return ListView(
             padding: EdgeInsets.only(bottom: kFloatingNavSpace),
             children: [
-              // Figma: "Header" — Cinzel "PROFIL" va tahrirlash tugmasi.
               Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 16.h, 8.w, 16.h),
                 child: Row(
@@ -80,7 +74,6 @@ class ProfileView extends GetView<ProfileController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Figma: "User" — yashil halqali avatar, ism va email.
                     Row(
                       children: [
                         SizedBox(
@@ -135,11 +128,9 @@ class ProfileView extends GetView<ProfileController> {
                     ),
                     SizedBox(height: 32.h),
 
-                    // Obuna kartasi (holat serverdan: GET /account/subscription)
                     ..._subscriptionSection(controller.subscription.value),
                     SizedBox(height: 32.h),
 
-                    // Figma: "Settings Menu" — fonsiz qatorlar, ingichka ajratgich.
                     _menu([
                       _item('menu_user', "Hisob ma'lumotlari".tr, () => Get.toNamed(Routes.ACCOUNT)),
                       _item('menu_settings', 'Ilova sozlamalari'.tr, () => Get.toNamed(Routes.SETTINGS)),
@@ -158,7 +149,6 @@ class ProfileView extends GetView<ProfileController> {
                     ]),
                     SizedBox(height: 48.h),
 
-                    // Figma: "Btn / Tizimdan chiqish".
                     Material(
                       color: const Color(0xFF311111),
                       borderRadius: BorderRadius.circular(12.r),
@@ -205,7 +195,6 @@ class ProfileView extends GetView<ProfileController> {
     String date(DateTime d) =>
         '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
 
-    // Figma: "Premium Banner".
     final card = Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -333,7 +322,6 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  /// Figma: menyu qatorlari orasida 1px oq 5% ajratgich, umumiy fon yo'q.
   Widget _menu(List<Widget> children) {
     return Material(
       color: Colors.transparent,
@@ -348,7 +336,6 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  /// Figma: "Menu / ..." — 20px ikonka, 16px matn, 14px chevron.
   Widget _item(String icon, String title, VoidCallback onTap, {String? trailing}) {
     return InkWell(
       onTap: onTap,

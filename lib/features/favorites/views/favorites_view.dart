@@ -13,7 +13,6 @@ class FavoritesView extends GetView<FavoritesController> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -58,7 +57,7 @@ class FavoritesView extends GetView<FavoritesController> {
                       crossAxisCount: 3,
                       crossAxisSpacing: 12.w,
                       mainAxisSpacing: 16.h,
-                      childAspectRatio: 0.54, // poster 125:175 + ikki qator matn
+                      childAspectRatio: 0.54,
                     ),
                     itemCount: controller.favorites.length,
                     itemBuilder: (_, i) => SeriesPosterCard(series: controller.favorites[i], width: double.infinity),

@@ -5,9 +5,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_widgets.dart';
 import '../controllers/auth_controller.dart';
 
-/// Kirish ekrani — Figma: "01 Kirish" (node 1:2).
-/// Dizayndagi "Orqaga", "O'tkazib yuborish" va Apple tugmalari ataylab qo'yilmagan
-/// (backend login'siz ishlamaydi, Apple orqali kirish hali yo'q).
 class AuthView extends GetView<AuthController> {
   const AuthView({super.key});
 
@@ -17,7 +14,6 @@ class AuthView extends GetView<AuthController> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        // Figma: fon gradienti #07090C → #0C1017 → #07090C.
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -27,7 +23,6 @@ class AuthView extends GetView<AuthController> {
         ),
         child: Stack(
           children: [
-            // Figma: "Emerald glow" (tepada) va "Gold glow" (pastki o'ng burchakda).
             Positioned(
               left: -65.w,
               top: -150.h,
@@ -44,7 +39,6 @@ class AuthView extends GetView<AuthController> {
                 child: Column(
                   children: [
                     SizedBox(height: 60.h),
-                    // Figma: "Logo" 280×112, soya bilan.
                     Container(
                       decoration: BoxDecoration(boxShadow: [
                         BoxShadow(color: Colors.black.withValues(alpha: 0.8), blurRadius: 24, offset: const Offset(0, 12)),
@@ -82,7 +76,6 @@ class AuthView extends GetView<AuthController> {
                     ),
                     SizedBox(height: 56.h),
 
-                    // Figma: "Btn / Google" — 48px, burchak 12.
                     Obx(() => Material(
                           color: const Color(0xFF161B24).withValues(alpha: 0.9),
                           shape: RoundedRectangleBorder(
@@ -125,7 +118,6 @@ class AuthView extends GetView<AuthController> {
 
                     const Spacer(),
 
-                    // Figma: "Footer" — shartlar.
                     SizedBox(
                       width: 320.w,
                       child: RichText(

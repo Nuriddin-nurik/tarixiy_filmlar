@@ -17,7 +17,6 @@ class HomeController extends GetxController {
 
   List<SeriesModel> get series => homeData.value?.series ?? const [];
 
-  /// Seriallarni janr bo'yicha guruhlaydi (Bosh sahifadagi bo'limlar uchun).
   Map<String, List<SeriesModel>> get seriesByGenre {
     final map = <String, List<SeriesModel>>{};
     for (final s in series) {
@@ -63,7 +62,6 @@ class HomeController extends GetxController {
     try {
       continueWatching.value = await _apiProvider.getContinueWatching();
     } catch (_) {
-      // Ixtiyoriy bo'lim — xato bo'lsa shunchaki ko'rsatilmaydi.
     }
   }
 }

@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../data/models/notification_model.dart';
 import '../../../data/providers/api_provider.dart';
 
-/// Ilova bo'ylab bitta nusxa: qo'ng'iroqcha belgisi (o'qilmaganlar soni) va ro'yxat.
 class NotificationsController extends GetxController with WidgetsBindingObserver {
   final ApiProvider _api = ApiProvider();
 
@@ -21,7 +20,6 @@ class NotificationsController extends GetxController with WidgetsBindingObserver
     super.onClose();
   }
 
-  /// Ilova fondan qaytganda (masalan, push kelgandan keyin) sonni yangilaymiz.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) _refreshIfLoggedIn();
@@ -41,7 +39,6 @@ class NotificationsController extends GetxController with WidgetsBindingObserver
     try {
       unreadCount.value = await _api.getUnreadNotificationCount();
     } catch (_) {
-      // Belgi yangilanmasa ham ilova ishlashiga ta'sir qilmaydi.
     }
   }
 

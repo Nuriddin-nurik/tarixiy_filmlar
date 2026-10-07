@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Ilova tilini saqlash va almashtirish.
 class LocaleService {
   static const _key = 'app_locale';
   static const uz = Locale('uz', 'UZ');

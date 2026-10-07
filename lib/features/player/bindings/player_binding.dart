@@ -5,6 +5,5 @@ class PlayerBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut<PlayerController>(() => PlayerController());
-    // DownloadController butun ilova uchun main.dart da yaratiladi.
   }
 }

@@ -5,18 +5,11 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'secure_hls_downloader.dart';
 import 'video_key_store.dart';
 
-/// Foreground service ishga tushganda chaqiriladi (alohida Flutter engine'da).
 @pragma('vm:entry-point')
 void startDownloadService() {
   FlutterForegroundTask.setTaskHandler(DownloadTaskHandler());
 }
 
-/// Yuklash navbati — ilova yopilganda ham shu yerda davom etadi.
-///
-/// Asosiy ilova bilan aloqa (Map xabarlar):
-///   ilova → xizmat: {'cmd': 'add', 'job': {...}}, {'cmd': 'cancel', 'id': 1}, {'cmd': 'status'}
-///   xizmat → ilova: {'id': 1, 'p': 0.42}, {'id': 1, 'done': true}, {'id': 1, 'error': true},
-///                   {'status': [1, 2]}  (navbatdagi va yuklanayotgan qismlar)
 class DownloadTaskHandler extends TaskHandler {
   static const queueKey = 'download_queue';
 
@@ -53,7 +46,7 @@ class DownloadTaskHandler extends TaskHandler {
         _queue.removeWhere((j) => j.episodeId == id);
         _persist();
         if (_current?.episodeId == id) {
-          _task?.cancel(); // natija false bo'ladi, _next() o'zi chaqiriladi
+          _task?.cancel();
         }
         _sendStatus();
         break;
@@ -107,7 +100,7 @@ class DownloadTaskHandler extends TaskHandler {
 
   void _updateNotification(DownloadJob job, double p) {
     final percent = (p * 100).floor();
-    if (percent == _lastPercent) return; // bildirishnomani har bo'lakda yangilamaymiz
+    if (percent == _lastPercent) return;
     _lastPercent = percent;
     final more = _queue.length > 1 ? ' (+${_queue.length - 1})' : '';
     FlutterForegroundTask.updateService(

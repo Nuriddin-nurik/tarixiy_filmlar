@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// Ko'p so'raladigan savollar.
 class FaqView extends StatelessWidget {
   const FaqView({super.key});
 

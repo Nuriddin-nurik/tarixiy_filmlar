@@ -44,7 +44,6 @@ class ApiProvider {
     return SeriesDetailsModel.fromJson(response.data);
   }
 
-  /// Like ni almashtiradi. Qaytaradi: (liked, likeCount)
   Future<(bool, int)> toggleLike(int seriesId) async {
     final response = await _dioClient.dio.post(ApiConstants.toggleLike(seriesId));
     final data = response.data as Map<String, dynamic>;
@@ -71,7 +70,6 @@ class ApiProvider {
     return (response.data as List).map((i) => SubscriptionPlanModel.fromJson(i)).toList();
   }
 
-  /// To'lov order yaratadi. Obuna uchun [planId], alohida serial uchun [seriesId] beriladi.
   Future<PaymentOrderModel> createPaymentOrder({int? planId, int? seriesId, required int months}) async {
     final response = await _dioClient.dio.post(ApiConstants.createPayment, data: {
       'subscriptionPlanId': planId,
@@ -80,8 +78,6 @@ class ApiProvider {
     });
     return PaymentOrderModel.fromJson(response.data);
   }
-
-  // ───────────── Bildirishnomalar ─────────────
 
   Future<void> updateFcmToken(String token) async {
     await _dioClient.dio.put(ApiConstants.fcmToken, data: {'fcmToken': token});
@@ -113,7 +109,6 @@ class ApiProvider {
     await _dioClient.dio.post(ApiConstants.logout, data: {'email': email});
   }
 
-  // Avtorizatsiya uchun
   Future<Map<String, dynamic>?> signIn(String email, String password, String deviceId) async {
     final response = await _dioClient.dio.post(
       ApiConstants.signIn,

@@ -15,15 +15,14 @@ import '../../../core/secure_video/secure_hls_downloader.dart';
 import '../../../core/secure_video/video_key_store.dart';
 import '../../../core/widgets/app_widgets.dart';
 
-/// Yuklangan qism haqida ma'lumot (Yuklanmalar sahifasida ko'rsatish uchun).
 class DownloadedEpisode {
   final int episodeId;
   final int seriesId;
   final String title;
   final String? seriesTitle;
   final String? thumbnail;
-  final int quality; // masalan 480
-  final String? mediaUrl; // tanlangan sifat playlist'i (davom ettirish uchun)
+  final int quality;
+  final String? mediaUrl;
   final bool complete;
 
   DownloadedEpisode({
@@ -71,17 +70,11 @@ class DownloadedEpisode {
       );
 }
 
-/// Ilova bo'ylab bitta nusxa (main.dart da Get.put qilinadi).
-///
-/// Yuklangan qismlar shifrlangan holda ilovaning yopiq xotirasida saqlanadi va
-/// faqat shu ilova ichida (LocalVideoServer orqali) ijro etiladi.
 class DownloadController extends GetxController {
   static const _prefsKey = 'downloads_v2';
 
-  /// Yuklanayotgan qismlar foizi (0..1). Tugaganlari bu yerda bo'lmaydi.
   var downloadProgress = <int, double>{}.obs;
   var downloads = <DownloadedEpisode>[].obs;
-  /// Hozir xizmatda (yuklanayotgan yoki navbatda turgan) qismlar.
   final _active = <int>{}.obs;
 
   @override
@@ -97,7 +90,6 @@ class DownloadController extends GetxController {
     super.onClose();
   }
 
-  /// Foreground service bildirishnomasi sozlamalari (bir marta, main.dart da chaqiriladi).
   static void initService() {
     FlutterForegroundTask.initCommunicationPort();
     FlutterForegroundTask.init(
@@ -121,22 +113,18 @@ class DownloadController extends GetxController {
 
   bool isDownloading(int episodeId) => _active.contains(episodeId);
 
-  /// To'xtab qolgan (internet uzilgan yoki xato bo'lgan) yuklash.
   bool isPaused(int episodeId) =>
       !isDownloading(episodeId) && downloads.any((d) => d.episodeId == episodeId && !d.complete);
 
-  /// Yuklangan qismni pleyer uchun lokal manzili.
   Future<String?> playbackUrl(int episodeId) async {
     if (!isComplete(episodeId)) return null;
     return LocalVideoServer.instance.playlistUrl(episodeId);
   }
 
-  /// Master playlist'dan mavjud sifatlarni oladi (yuklash oynasi uchun).
   Future<List<HlsVariant>> variants(String masterUrl) async {
     final dio = Dio();
     final res = await dio.get<String>(masterUrl, options: Options(responseType: ResponseType.plain));
     final list = SecureHlsDownloader.parseMaster(res.data ?? '', masterUrl);
-    // Haqiqiy hajmni bo'laklardan namuna olib hisoblaymiz (BANDWIDTH 2–3 baravar oshirib ko'rsatadi).
     await Future.wait(list.map((v) => v.sampleSize(dio)));
     return list;
   }
@@ -158,7 +146,6 @@ class DownloadController extends GetxController {
     await _enqueue(entry!);
   }
 
-  /// Qismni yuklash xizmatiga topshiradi (xizmat ishlamayotgan bo'lsa ishga tushiradi).
   Future<void> _enqueue(DownloadedEpisode entry) async {
     final id = entry.episodeId;
     final dir = await LocalVideoServer.episodeDir(id);
@@ -168,7 +155,6 @@ class DownloadController extends GetxController {
       dirPath: dir.path,
       title: entry.seriesTitle?.isNotEmpty == true ? '${entry.seriesTitle} — ${entry.title}' : entry.title,
     );
-    // Kalitni oldindan yaratamiz — xizmat uni xavfsiz xotiradan o'qiydi.
     await VideoKeyStore.getOrCreate(id);
 
     _active.add(id);
@@ -197,7 +183,6 @@ class DownloadController extends GetxController {
     }
   }
 
-  /// Xizmatdan kelgan xabarlar (progress, tugadi, xato, navbat holati).
   void _onServiceData(Object data) {
     if (data is! Map) return;
     if (data['status'] is List) {
@@ -229,13 +214,11 @@ class DownloadController extends GetxController {
     }
   }
 
-  /// Yuklashni bekor qiladi va yarim yuklangan fayllarni o'chiradi.
   Future<void> cancel(int episodeId) => delete(episodeId);
 
   Future<void> delete(int episodeId) async {
     if (_active.remove(episodeId) && await FlutterForegroundTask.isRunningService) {
       FlutterForegroundTask.sendDataToTask({'cmd': 'cancel', 'id': episodeId});
-      // Xizmat isolate'ni to'xtatguncha fayllarga yozishi mumkin — biroz kutamiz.
       await Future.delayed(const Duration(milliseconds: 500));
     }
     downloadProgress.remove(episodeId);
@@ -246,7 +229,6 @@ class DownloadController extends GetxController {
     await VideoKeyStore.delete(episodeId);
   }
 
-  /// Barcha yuklanmalarni o'chiradi (sozlamalardan yoki akkauntdan chiqqanda).
   Future<void> deleteAll() async {
     if (await FlutterForegroundTask.isRunningService) {
       await FlutterForegroundTask.removeData(key: DownloadTaskHandler.queueKey);
@@ -263,7 +245,6 @@ class DownloadController extends GetxController {
     if (await root.exists()) await root.delete(recursive: true);
   }
 
-  /// Yuklanmalar egallagan joy (MB).
   Future<double> totalSizeMb() async {
     final dir = await LocalVideoServer.rootDir();
     if (!await dir.exists()) return 0;
@@ -280,7 +261,6 @@ class DownloadController extends GetxController {
     if (raw != null) {
       downloads.value = (jsonDecode(raw) as List).map((e) => DownloadedEpisode.fromJson(e)).toList();
     }
-    // Ilova yopiq paytda xizmat yuklashni tugatgan bo'lishi mumkin — diskdagi belgiga qaraymiz.
     var changed = false;
     for (var i = 0; i < downloads.length; i++) {
       final d = downloads[i];
@@ -292,11 +272,9 @@ class DownloadController extends GetxController {
       }
     }
     if (changed) await _persist();
-    // Xizmat hali ishlayotgan bo'lsa — qaysi qismlar yuklanayotganini so'raymiz.
     if (await FlutterForegroundTask.isRunningService) {
       FlutterForegroundTask.sendDataToTask({'cmd': 'status'});
     }
-    // Eski (shifrlanmagan) yuklovchidan qolgan fayllarni tozalaymiz.
     await prefs.remove('downloads');
     final legacy = Directory(p.join((await getApplicationDocumentsDirectory()).path, 'movies'));
     if (await legacy.exists()) await legacy.delete(recursive: true);

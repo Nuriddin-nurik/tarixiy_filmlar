@@ -4,9 +4,6 @@ import 'dart:typed_data';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Har bir yuklangan qism uchun alohida AES-128 kalit.
-/// Kalitlar Android Keystore bilan himoyalangan xotirada saqlanadi — fayllarni
-/// telefondan ko'chirib olishsa ham, kalitsiz ular ochilmaydi.
 class VideoKeyStore {
   static const _storage = FlutterSecureStorage();
   static String _name(int episodeId) => 'video_key_$episodeId';

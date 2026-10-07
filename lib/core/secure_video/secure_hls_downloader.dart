@@ -7,17 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
 import 'package:pointycastle/export.dart';
 
-/// HLS qismni yuklab, har bir bo'lakni AES-128-CBC bilan shifrlab saqlaydi.
-///
-/// Diskda:
-///   index.m3u8  — kalit qatorisiz playlist (bo'laklar: seg_<n>.ts)
-///   s<n>.bin    — shifrlangan bo'laklar (IV = bo'lak tartib raqami, HLS standarti bo'yicha)
-///   complete    — yuklash tugaganini bildiradi
-/// Ish alohida isolate'da bajariladi, UI sekinlashmaydi. Oldin yuklangan bo'laklar
-/// o'tkazib yuboriladi, shuning uchun uzilgan yuklash davom ettiriladi.
 class SecureHlsDownloader {
-  /// Yuklashni boshlaydi. [onProgress] 0..1 oralig'ida chaqiriladi.
-  /// Qaytgan [SecureDownloadTask] orqali bekor qilish mumkin.
   static Future<SecureDownloadTask> start({
     required String mediaPlaylistUrl,
     required String dirPath,
@@ -42,7 +32,6 @@ class SecureHlsDownloader {
     return SecureDownloadTask._(isolate, receive, completer);
   }
 
-  /// HLS master playlist'dan variantlarni o'qiydi: balandlik -> (url, bandwidth).
   static List<HlsVariant> parseMaster(String content, String masterUrl) {
     final base = masterUrl.substring(0, masterUrl.lastIndexOf('/') + 1);
     final lines = content.split('\n').map((l) => l.trim()).toList();
@@ -63,8 +52,6 @@ class SecureHlsDownloader {
     return out;
   }
 
-  // ─────────────────────────── Isolate ichida ───────────────────────────
-
   static Future<void> _run(_Job job) async {
     final send = job.port;
     try {
@@ -79,7 +66,6 @@ class SecureHlsDownloader {
       final lines = (res.data ?? '').split('\n').map((l) => l.trim()).toList();
       final base = job.url.substring(0, job.url.lastIndexOf('/') + 1);
 
-      // Bo'laklar ro'yxati va lokal playlist.
       final segUrls = <String>[];
       final local = <String>[];
       for (final l in lines) {
@@ -106,7 +92,6 @@ class SecureHlsDownloader {
           if (!await out.exists()) {
             final bytes = await _downloadWithRetry(dio, segUrls[i]);
             final enc = encryptSegment(bytes, job.key, i);
-            // Avval vaqtinchalik faylga yozamiz — yarim yozilgan fayl "tayyor" hisoblanmasin.
             final tmp = File('${out.path}.tmp');
             await tmp.writeAsBytes(enc, flush: true);
             await tmp.rename(out.path);
@@ -138,8 +123,6 @@ class SecureHlsDownloader {
     }
   }
 
-  /// AES-128-CBC + PKCS7. IV = bo'lak tartib raqami (16 bayt, big-endian) —
-  /// HLS da IV ko'rsatilmasa pleyer xuddi shunday hisoblaydi.
   static Uint8List encryptSegment(Uint8List data, Uint8List key, int sequence) {
     final iv = Uint8List(16);
     var s = sequence;
@@ -165,18 +148,12 @@ class HlsVariant {
   final int bandwidth;
   HlsVariant(this.height, this.url, this.bandwidth);
 
-  /// Bo'laklardan namuna olib hisoblangan haqiqiy hajm (bayt). null — hisoblanmagan.
   int? sampledBytes;
 
-  /// Taxminiy hajm (MB). Namuna bo'yicha hisoblangan bo'lsa — o'sha (aniq),
-  /// bo'lmasa bitreyt × davomiylik. Diqqat: BANDWIDTH eng yuqori (peak) qiymat,
-  /// shuning uchun bu zaxira hisob haqiqiydan 2–3 baravar katta chiqadi.
   double estimateMb(int durationSeconds) => sampledBytes != null
       ? sampledBytes! / 1024 / 1024
       : bandwidth * durationSeconds / 8 / 1024 / 1024;
 
-  /// Playlist'dagi bir nechta bo'lakning hajmini (HEAD so'rovi bilan) olib,
-  /// o'rtachasini bo'laklar soniga ko'paytiradi. Xato bo'lsa sampledBytes null qoladi.
   Future<void> sampleSize(Dio dio, {int samples = 8}) async {
     try {
       final res = await dio.get<String>(url, options: Options(responseType: ResponseType.plain));
@@ -199,7 +176,6 @@ class HlsVariant {
       final avg = valid.reduce((a, b) => a + b) / valid.length;
       sampledBytes = (avg * segs.length).round();
     } catch (_) {
-      // Namuna olinmasa — bitreyt bo'yicha zaxira hisob ishlatiladi.
     }
   }
 }
@@ -210,7 +186,6 @@ class SecureDownloadTask {
   final ReceivePort _port;
   final Completer<bool> _done;
 
-  /// true — muvaffaqiyatli, false — xato yoki bekor qilindi.
   Future<bool> get result => _done.future;
 
   void cancel() {

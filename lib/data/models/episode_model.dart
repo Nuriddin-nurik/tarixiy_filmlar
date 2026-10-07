@@ -4,8 +4,8 @@ class EpisodeModel {
   final String? title;
   final int? episodeNumber;
   final String? thumbnail;
-  final String? videoUrl; // HLS m3u8 link shu yerda keladi
-  final int? durationSeconds; // umumiy davomiylik (soniyada)
+  final String? videoUrl;
+  final int? durationSeconds;
   final double? fileSizeMb;
   final bool? hasAccess;
   final bool? free;
@@ -28,7 +28,6 @@ class EpisodeModel {
   });
 
   factory EpisodeModel.fromJson(Map<String, dynamic> json) {
-    // Backend davomiylikni soat/daqiqa/soniya qismlariga bo'lib yuboradi.
     final h = (json['durationHours'] as num?)?.toInt() ?? 0;
     final m = (json['durationMinutes'] as num?)?.toInt() ?? 0;
     final s = (json['durationSeconds'] as num?)?.toInt() ?? 0;

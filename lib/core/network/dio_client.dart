@@ -9,7 +9,6 @@ import '../../core/widgets/app_widgets.dart';
 class DioClient {
   late Dio dio;
 
-  /// Bir vaqtda bir nechta so'rov 401 olsa ham, refresh faqat bir marta bajariladi.
   static Future<bool>? _refreshing;
 
   DioClient() {
@@ -28,7 +27,6 @@ class DioClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Tokenni qo'shish
           final prefs = await SharedPreferences.getInstance();
           final token = prefs.getString('access_token');
           final deviceId = await DeviceId.get();
@@ -45,8 +43,6 @@ class DioClient {
           final opts = e.requestOptions;
           final isAuthCall = opts.path.startsWith('/auth/');
 
-          // Access token 30 daqiqada eskiradi (backend: jwt.access-token-expiry-ms).
-          // Shunda refresh token bilan yangisini olib, so'rovni qayta yuboramiz.
           if (status == 401 && !isAuthCall && opts.extra['retried'] != true) {
             final prefs = await SharedPreferences.getInstance();
             final hadToken = (prefs.getString('access_token') ?? '').isNotEmpty;
@@ -55,7 +51,6 @@ class DioClient {
             if (await _refreshTokens()) {
               try {
                 opts.extra['retried'] = true;
-                // onRequest yangi tokenni o'zi qo'yadi.
                 final response = await dio.fetch(opts);
                 return handler.resolve(response);
               } on DioException catch (retryError) {
@@ -63,7 +58,6 @@ class DioClient {
               }
             }
 
-            // Refresh ham o'tmadi (30 kun o'tgan yoki boshqa qurilmadan kirilgan).
             await _logout();
           }
           return handler.next(e);
@@ -81,7 +75,6 @@ class DioClient {
     final refreshToken = prefs.getString('refresh_token');
     if (refreshToken == null || refreshToken.isEmpty) return false;
     try {
-      // Interceptor'siz alohida Dio — aks holda refresh xatosi yana shu yerga tushadi.
       final res = await Dio(BaseOptions(baseUrl: ApiConstants.baseUrl)).post(
         ApiConstants.refresh,
         data: {'refreshToken': refreshToken},
@@ -102,7 +95,7 @@ class DioClient {
 
   static Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
-    if ((prefs.getString('access_token') ?? '').isEmpty) return; // allaqachon chiqarilgan
+    if ((prefs.getString('access_token') ?? '').isEmpty) return;
     await prefs.remove('access_token');
     await prefs.remove('refresh_token');
     if (Get.currentRoute != Routes.AUTH) {

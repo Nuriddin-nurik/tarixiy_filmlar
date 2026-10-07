@@ -10,16 +10,12 @@ import '../../features/notifications/controllers/notifications_controller.dart';
 import '../routes/app_routes.dart';
 import '../utils/open_series.dart';
 
-/// Ilova yopiq/fonda bo'lganda kelgan xabarlar. Android `notification` qismini
-/// o'zi ko'rsatadi, bu yerda qo'shimcha ish shart emas.
 @pragma('vm:entry-point')
 Future<void> firebaseBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
 }
 
-/// Push bildirishnomalar (Firebase Cloud Messaging).
 class PushService {
-  /// Backend `fcm.android-channel-id` bilan bir xil bo'lishi shart.
   static const channelId = 'tarixiy_filmlar_notifications_v4';
 
   static final _local = FlutterLocalNotificationsPlugin();
@@ -34,7 +30,6 @@ class PushService {
     }
     FirebaseMessaging.onBackgroundMessage(firebaseBackgroundHandler);
 
-    // Android 8+ uchun kanal (backend shu kanalga yuboradi).
     const channel = AndroidNotificationChannel(
       channelId,
       'Tarixiy Kinolar',
@@ -46,11 +41,9 @@ class PushService {
         ?.createNotificationChannel(channel);
     await _local.initialize(
       const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
-      // payload = seriesId (bo'lsa) — ilova ochiq paytda kelgan xabar bosilganda.
       onDidReceiveNotificationResponse: (r) => _openFromPush(r.payload),
     );
 
-    // Ilova ochiq paytda kelgan xabar — o'zimiz ko'rsatamiz (Android buni avtomatik qilmaydi).
     FirebaseMessaging.onMessage.listen((m) {
       final n = m.notification;
       if (n != null) {
@@ -70,11 +63,9 @@ class PushService {
       }
     });
 
-    // Bildirishnoma bosilib ilova ochilganda.
     FirebaseMessaging.onMessageOpenedApp.listen((m) => _openFromPush(m.data['seriesId']));
     final initial = await FirebaseMessaging.instance.getInitialMessage();
     if (initial != null) {
-      // Marshrutlar tayyor bo'lgach ochamiz.
       Future.delayed(const Duration(milliseconds: 800), () => _openFromPush(initial.data['seriesId']));
     }
 
@@ -82,7 +73,6 @@ class PushService {
     _ready = true;
   }
 
-  /// Login bo'lgandan keyin (va har ilova ochilganda) chaqiriladi.
   static Future<void> registerToken() async {
     if (!_ready) return;
     try {
@@ -96,7 +86,7 @@ class PushService {
 
   static Future<void> _sendToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
-    if ((prefs.getString('access_token') ?? '').isEmpty) return; // login qilinmagan
+    if ((prefs.getString('access_token') ?? '').isEmpty) return;
     try {
       await ApiProvider().updateFcmToken(token);
     } catch (e) {
@@ -104,7 +94,6 @@ class PushService {
     }
   }
 
-  /// Push'da seriesId bo'lsa — o'sha serial, bo'lmasa bildirishnomalar ro'yxati.
   static void _openFromPush(String? seriesId) {
     final id = int.tryParse(seriesId ?? '');
     if (Get.isRegistered<NotificationsController>()) {

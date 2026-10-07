@@ -11,7 +11,7 @@ class HomeResponseModel {
   factory HomeResponseModel.fromJson(Map<String, dynamic> json) {
     return HomeResponseModel(
       user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
-      banners: json['banners'] != null 
+      banners: json['banners'] != null
           ? (json['banners'] as List).map((i) => BannerModel.fromJson(i)).toList()
           : null,
       series: json['series'] != null

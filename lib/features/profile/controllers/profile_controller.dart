@@ -33,7 +33,6 @@ class ProfileController extends GetxController with WidgetsBindingObserver {
     super.onClose();
   }
 
-  /// To'lov sahifasidan (brauzerdan) qaytganda obuna holatini yangilaymiz.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) loadSubscription();
@@ -43,7 +42,6 @@ class ProfileController extends GetxController with WidgetsBindingObserver {
     try {
       subscription.value = await _apiProvider.getMySubscription();
     } catch (_) {
-      // Holatni olib bo'lmasa, oldingisi qoladi.
     }
   }
 
@@ -53,7 +51,6 @@ class ProfileController extends GetxController with WidgetsBindingObserver {
       final email = user?.email;
       if (email != null) await _apiProvider.logout(email);
     } catch (_) {
-      // Server javob bermasa ham lokal sessiyani tozalaymiz.
     }
     await _clearSession();
     isLoggingOut(false);
@@ -76,11 +73,9 @@ class ProfileController extends GetxController with WidgetsBindingObserver {
     try {
       await GoogleSignIn().signOut();
     } catch (_) {}
-    // Yuklanmalar akkauntga tegishli — boshqa odam shu telefondan kirsa ko'rmasin.
     await Get.find<DownloadController>().deleteAll();
     Get.find<NotificationsController>().clear();
     final prefs = await SharedPreferences.getInstance();
-    // device_id ni o'chirmaymiz — u qurilmaga bog'langan.
     await prefs.remove('access_token');
     await prefs.remove('refresh_token');
     Get.offAllNamed(Routes.AUTH);

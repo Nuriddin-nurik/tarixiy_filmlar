@@ -10,7 +10,6 @@ import '../../player/controllers/download_controller.dart';
 import 'language_sheet.dart';
 import '../../../core/widgets/app_widgets.dart';
 
-/// Ilova sozlamalari: til, kesh, yuklanmalarni tozalash.
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
 

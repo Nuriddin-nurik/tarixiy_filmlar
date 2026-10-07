@@ -12,8 +12,6 @@ import '../controllers/player_controller.dart';
 import '../controllers/download_controller.dart';
 import '../widgets/download_button.dart';
 
-/// Pleyer — Figma: "04 Epizodlar" (node 2:227). Bu ekran Noto Serif shriftida.
-/// Dizayndagi "Dublyaj", Cast tugmasi va layk/ko'rishlar soni qo'yilmagan: ma'lumoti yo'q.
 class PlayerView extends GetView<PlayerController> {
   const PlayerView({super.key});
 
@@ -43,11 +41,6 @@ class PlayerView extends GetView<PlayerController> {
       ),
     );
 
-    // Sahifa vertikalga qulflangan, shuning uchun gorizontal o'lcham faqat to'liq ekran
-    // oynasi ochiq paytda keladi. Shu paytda ostidagi sahifa hech narsa chizmaydi —
-    // aks holda u ham qayta quriladi (sig'may qoladi va o'tishni sekinlashtiradi).
-    // Video widget'i daraxtda qoladi (media_kit to'liq ekrandan chiqishda uning holatidan
-    // foydalanadi), lekin Offstage — chizilmaydi.
     if (MediaQuery.of(context).orientation == Orientation.landscape) {
       return Scaffold(
         backgroundColor: Colors.black,
@@ -60,10 +53,8 @@ class PlayerView extends GetView<PlayerController> {
       body: SafeArea(
         child: Column(
           children: [
-            // 1. VIDEO PLEYER (16:9)
             AspectRatio(aspectRatio: 16 / 9, child: ColoredBox(color: Colors.black, child: video)),
 
-            // 2. TAFSILOTLAR VA QISMLAR
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
@@ -79,7 +70,6 @@ class PlayerView extends GetView<PlayerController> {
                 return ListView(
                   padding: EdgeInsets.only(bottom: 24.h),
                   children: [
-                    // Figma: "Meta" paneli.
                     Container(
                       decoration: BoxDecoration(
                         color: AppColors.playerPanel,
@@ -107,7 +97,6 @@ class PlayerView extends GetView<PlayerController> {
                             Text(current!.title!, style: _t(12, FontWeight.w400, _muted, height: 16 / 12)),
                           ],
 
-                          // Figma: "Quick actions" — joriy qismni yuklab olish.
                           if (current != null && current.canWatch && current.videoUrl != 'offline') ...[
                             SizedBox(height: 14.h),
                             Container(
@@ -125,7 +114,6 @@ class PlayerView extends GetView<PlayerController> {
                             ),
                           ],
 
-                          // Figma: "Season selector".
                           if (seasons.length > 1) ...[
                             SizedBox(height: 14.h),
                             Row(
@@ -154,7 +142,6 @@ class PlayerView extends GetView<PlayerController> {
                       ),
                     ),
 
-                    // Figma: "Tabs".
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 16.w),
                       decoration: BoxDecoration(
@@ -170,7 +157,6 @@ class PlayerView extends GetView<PlayerController> {
                       ),
                     ),
 
-                    // Figma: "EpisodeList".
                     if (list.isEmpty)
                       Padding(
                         padding: EdgeInsets.all(32.w),
@@ -230,7 +216,6 @@ class PlayerView extends GetView<PlayerController> {
     );
   }
 
-  /// Figma: video ustidagi boshqaruvlar (yumaloq tugmalar, yashil "Ijro" tugmasi, 6px progress).
   MaterialVideoControlsThemeData _controlsTheme({required bool fullscreen}) {
     Widget circle(double size, Color color, Widget child, {Border? border, List<BoxShadow>? shadow}) => ClipOval(
           child: BackdropFilter(
@@ -261,8 +246,6 @@ class PlayerView extends GetView<PlayerController> {
         );
 
     return MaterialVideoControlsThemeData(
-      // Vaqt chizig'i aniq ko'rinsin: qalinroq chiziq, ochroq fon va katta tutqich
-      // (Figma: 6px, #10B981 to'ldirish).
       seekBarHeight: 5,
       seekBarContainerHeight: 40,
       seekBarColor: Colors.white.withValues(alpha: 0.35),
@@ -270,14 +253,8 @@ class PlayerView extends GetView<PlayerController> {
       seekBarPositionColor: AppColors.playerAccent,
       seekBarThumbColor: Colors.white,
       seekBarThumbSize: 14,
-      // media_kit chiziqni pastki tugmalar qatori (56px) bilan bir joyga qo'yadi.
-      // Figma'dagidek chiziq vaqt/720P/to'liq ekran qatorining USTIDA tursin — 42px ko'taramiz.
-      // Shunda oq doira ham video chetidan uzoq bo'ladi va qirqilmaydi.
       seekBarMargin: const EdgeInsets.fromLTRB(14, 0, 14, 42),
-      // Boshqaruvlar tez yashirinsa, media_kit seek bar'ni surish paytida o'chirib yuboradi
-      // ("widget has been unmounted" xatosi). Shuning uchun yashirinish vaqtini uzaytiramiz.
       controlsHoverDuration: const Duration(seconds: 5),
-      // Ekranning chap/o'ng tomoniga ikki marta bosish — 10 soniya orqaga/oldinga.
       seekOnDoubleTap: true,
       seekOnDoubleTapBackwardDuration: const Duration(seconds: 10),
       seekOnDoubleTapForwardDuration: const Duration(seconds: 10),
@@ -304,7 +281,6 @@ class PlayerView extends GetView<PlayerController> {
           onPressed: () => controller.seekBy(-10),
         ),
         const SizedBox(width: 32),
-        // Figma: "Btn / Ijro" — 56px yashil doira.
         _PlayPauseButton(player: controller),
         const SizedBox(width: 32),
         MaterialCustomButton(
@@ -320,7 +296,6 @@ class PlayerView extends GetView<PlayerController> {
           style: TextStyle(fontFamily: AppFonts.notoSerif, fontSize: 11, color: const Color(0xFFD1D5DB), height: 1.5),
         ),
         const Spacer(),
-        // Figma: "Badge / 1080p" — hozirgi sifat.
         Obx(() {
           final h = controller.playingHeight.value;
           if (h == 0) return const SizedBox.shrink();
@@ -346,9 +321,6 @@ class PlayerView extends GetView<PlayerController> {
     );
   }
 
-  /// Sifat tanlash oynasi. O'lchamlar qat'iy (sp/h emas) — to'liq ekranda (gorizontal)
-  /// ScreenUtil o'lchamlari kattalashib, oyna butun ekranni egallab qolardi.
-  /// Gorizontal rejimda ekran markazida ixcham oyna, vertikalda pastdan chiqadi.
   void _showQualitySheet() {
     TextStyle st(double size, FontWeight w, Color c) =>
         TextStyle(fontFamily: AppFonts.notoSerif, fontSize: size, fontWeight: w, color: c, height: 1.3);
@@ -356,7 +328,6 @@ class PlayerView extends GetView<PlayerController> {
     Widget option(int height, String label, {String? hint}) {
       return Obx(() {
         final selected = controller.selectedQuality.value == height;
-        // Avto rejimda hozir qaysi sifat ishlayotganini ham ko'rsatamiz: "Avto (480p)".
         final playing = controller.playingHeight.value;
         final title = height == 0 && selected && playing > 0 ? '$label (${playing}p)' : label;
         return InkWell(
@@ -430,7 +401,6 @@ class PlayerView extends GetView<PlayerController> {
     }
   }
 
-  /// Figma: "Episode / ..." kartochkasi.
   Widget _episodeTile(EpisodeModel episode, bool isPlaying) {
     final watched = episode.watchedSeconds ?? 0;
     final total = episode.durationSeconds ?? 0;
@@ -464,7 +434,6 @@ class PlayerView extends GetView<PlayerController> {
                   children: [
                     AppNetworkImage(episode.thumbnail),
                     ColoredBox(color: Colors.black.withValues(alpha: 0.2)),
-                    // Figma: "Play bg" + o'yin ikonkasi (yopiq qismda qulf).
                     Center(
                       child: episode.canWatch
                           ? Stack(alignment: Alignment.center, children: [
@@ -591,7 +560,6 @@ class PlayerView extends GetView<PlayerController> {
   }
 }
 
-/// Figma: "Btn / Ijro" — 56px yashil doira, 4px och yashil hoshiya.
 class _PlayPauseButton extends StatelessWidget {
   const _PlayPauseButton({required this.player});
   final PlayerController player;

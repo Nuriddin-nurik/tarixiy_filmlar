@@ -10,9 +10,6 @@ import '../../../core/widgets/app_widgets.dart';
 import '../../../data/models/episode_model.dart';
 import '../controllers/download_controller.dart';
 
-/// Qism yonidagi yuklab olish tugmasi:
-/// yuklanmagan → sifat tanlash, yuklanmoqda → foiz (bosilsa bekor qilish),
-/// to'xtagan → davom ettirish, yuklangan → o'chirish.
 class DownloadButton extends StatelessWidget {
   const DownloadButton({
     super.key,
@@ -26,7 +23,6 @@ class DownloadButton extends StatelessWidget {
   final int seriesId;
   final String seriesTitle;
 
-  /// true — Figma "Quick actions" dagi keng "Yuklab olish" tugmasi; false — ro'yxatdagi 36px doira.
   final bool wide;
 
   DownloadController get _dc => Get.find<DownloadController>();
@@ -36,7 +32,6 @@ class DownloadButton extends StatelessWidget {
     final id = episode.id!;
     return Obx(() {
       final progress = _dc.downloadProgress[id];
-      // downloads ni o'qish Obx ni ro'yxat o'zgarishlariga bog'laydi.
       _dc.downloads.length;
 
       if (_dc.isComplete(id)) {
@@ -94,8 +89,6 @@ class DownloadButton extends StatelessWidget {
     });
   }
 
-  /// Figma: ro'yxatda — 36px doira (yashil 20% fon, #0D7A57 hoshiya);
-  /// keng variant — 8px burchakli tugma, ikonka + matn.
   Widget _shell({required VoidCallback onTap, required Widget icon, required String label}) {
     if (!wide) {
       return Padding(
@@ -221,7 +214,6 @@ class DownloadButton extends StatelessWidget {
     );
   }
 
-  /// Yuklashdan oldin: telefonda joy yetarlimi va mobil internet bo'lsa ogohlantirish.
   Future<bool> _checksPass(double needMb) async {
     try {
       final free = await const MethodChannel('tarixiy/storage').invokeMethod<int>('freeBytes');

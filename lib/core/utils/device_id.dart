@@ -1,9 +1,6 @@
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Qurilma uchun barqaror ID. Birinchi chaqiruvda yaratiladi va saqlanadi,
-/// keyin har doim o'sha qiymat qaytariladi. Backend login paytida shu ID ni
-/// userga biriktiradi va har bir so'rovda X-Device-Id header orqali tekshiradi.
 class DeviceId {
   static const _key = 'device_id';
 

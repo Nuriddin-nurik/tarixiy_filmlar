@@ -9,8 +9,6 @@ import '../../../core/widgets/app_widgets.dart';
 import '../../../data/models/subscription_models.dart';
 import '../../../data/providers/api_provider.dart';
 
-/// To'lov oynasi: muddat tanlash -> order yaratish -> Pixy to'lov sahifasini ochish.
-/// Obuna uchun [planId], alohida serial uchun [seriesId] beriladi.
 Future<void> showPurchaseSheet({
   int? planId,
   int? seriesId,

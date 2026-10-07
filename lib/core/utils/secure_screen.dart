@@ -1,7 +1,5 @@
 import 'package:flutter/services.dart';
 
-/// Skrinshot va ekran yozuvini taqiqlash (Android FLAG_SECURE).
-/// Faqat video pleyer ochiq paytda yoqiladi — boshqa ekranlarda skrinshot olish mumkin.
 class SecureScreen {
   static const _channel = MethodChannel('tarixiy/secure');
 

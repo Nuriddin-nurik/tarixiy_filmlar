@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import '../../../core/i18n/locale_service.dart';
 import '../../../core/theme/app_colors.dart';
 
-/// Tilni tanlash oynasi.
 Future<void> showLanguageSheet() {
   Widget option(Locale locale, String name, String flag) {
     final selected = Get.locale?.languageCode == locale.languageCode;

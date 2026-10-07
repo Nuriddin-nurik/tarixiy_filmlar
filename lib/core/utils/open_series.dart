@@ -6,8 +6,6 @@ import '../../features/home/controllers/home_controller.dart';
 import '../routes/app_routes.dart';
 import '../widgets/app_widgets.dart';
 
-/// Serialni faqat id bo'yicha ochadi (push yoki bildirishnoma bosilganda).
-/// Avval bosh sahifadagi ro'yxatdan qidiradi, topilmasa serverdan so'raydi.
 Future<void> openSeriesById(int seriesId) async {
   SeriesModel? series;
   if (Get.isRegistered<HomeController>()) {

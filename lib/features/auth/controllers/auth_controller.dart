@@ -17,19 +17,16 @@ class AuthController extends GetxController {
 
   var isLoading = false.obs;
 
-  // Google bilan kirish
   Future<void> signInWithGoogle() async {
     try {
       isLoading(true);
-      
-      // 1. Google akkauntini tanlash
+
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         isLoading(false);
-        return; // Foydalanuvchi bekor qildi
+        return;
       }
 
-      // 2. Google ID tokenini olish
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
 
@@ -39,7 +36,6 @@ class AuthController extends GetxController {
         return;
       }
 
-      // 3. Tokenni Backend ga yuborish → /auth/google
       final prefs = await SharedPreferences.getInstance();
       final deviceId = await DeviceId.get();
 
@@ -54,12 +50,10 @@ class AuthController extends GetxController {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        // 4. JWT tokenni saqlash
         await prefs.setString('access_token', data['token'] ?? '');
         await prefs.setString('refresh_token', data['refreshToken'] ?? '');
-        
+
         Get.offAllNamed(Routes.MAIN);
-        // Push bildirishnomalar uchun qurilma tokenini serverga yuboramiz.
         PushService.registerToken();
         Get.find<NotificationsController>().refreshUnread();
       } else {

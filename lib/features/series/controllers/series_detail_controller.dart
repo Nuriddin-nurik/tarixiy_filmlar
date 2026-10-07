@@ -15,7 +15,6 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
   var isLoading = true.obs;
   var liked = false.obs;
   var likeCount = 0.obs;
-  /// Obuna tariflari ("Pullik bo'limlar" kartochkasi uchun).
   var plans = <SubscriptionPlanModel>[].obs;
 
   @override
@@ -31,7 +30,6 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
     try {
       plans.value = await _apiProvider.getSubscriptionPlans();
     } catch (_) {
-      // Tariflar bo'lmasa, faqat serialni sotib olish varianti ko'rinadi.
     }
   }
 
@@ -41,8 +39,6 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
     super.onClose();
   }
 
-  /// Pixy to'lov sahifasidan qaytganda kirish huquqini qayta tekshiramiz —
-  /// to'lov o'tgan bo'lsa qismlar darhol ochiladi.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) fetchDetails(silent: true);
@@ -68,7 +64,6 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
   }
 
   Future<void> toggleLike() async {
-    // Darhol UI ni yangilaymiz, server javobi bilan keyin to'g'rilaymiz.
     liked.toggle();
     likeCount.value += liked.value ? 1 : -1;
     try {
@@ -81,7 +76,6 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
     }
   }
 
-  /// Ko'rishni qaysi epizoddan boshlash kerak: oxirgi chala ko'rilgan, bo'lmasa birinchisi.
   int? get resumeEpisodeId {
     final parts = details.value?.parts ?? const [];
     if (parts.isEmpty) return null;

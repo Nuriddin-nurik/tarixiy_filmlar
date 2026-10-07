@@ -56,7 +56,6 @@ class PaymentOrderModel {
   }
 }
 
-/// Foydalanuvchining obuna holati (backend: GET /account/subscription).
 class MySubscriptionModel {
   final bool active;
   final DateTime? endDate;
@@ -79,7 +78,6 @@ class MySubscriptionModel {
   bool get hasAnything => active || series.isNotEmpty;
 }
 
-/// Alohida sotib olingan serial va uning muddati.
 class SeriesAccessModel {
   final int seriesId;
   final String title;

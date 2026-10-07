@@ -8,7 +8,6 @@ import '../../home/controllers/home_controller.dart';
 import '../../home/views/home_view.dart';
 import '../../main/views/main_view.dart';
 
-/// "Epizodlar" tabi: barcha seriallar katalogi (qidiruv + janr filtri).
 class CatalogView extends StatefulWidget {
   const CatalogView({super.key});
 
@@ -101,7 +100,7 @@ class _CatalogViewState extends State<CatalogView> {
                             crossAxisCount: 3,
                             crossAxisSpacing: 12.w,
                             mainAxisSpacing: 16.h,
-                            childAspectRatio: 0.54, // poster 125:175 + ikki qator matn
+                            childAspectRatio: 0.54,
                           ),
                           itemCount: filtered.length,
                           itemBuilder: (_, i) => SeriesPosterCard(series: filtered[i], width: double.infinity),

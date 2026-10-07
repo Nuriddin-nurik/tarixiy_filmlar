@@ -18,12 +18,10 @@ class SeriesModel {
   final bool? hasEpisode;
   final int? viewCount;
   final List<GenreModel> genres;
-  /// Qo'shimcha bepul qismlar joylangan Telegram kanal (bo'sh = yo'q) va u yerdagi qismlar soni.
   final String? telegramFreeUrl;
   final int? telegramFreeCount;
   final int? monthlyPrice;
   final int? quarterlyPrice;
-  /// true — umumiy obuna orqali ochiladi; aks holda faqat alohida sotib olinadi.
   final bool? subscriptionBased;
 
   SeriesModel({
@@ -62,7 +60,6 @@ class SeriesModel {
     );
   }
 
-  /// "Tarixiy, Jangari" kabi birlashgan janr nomlarini alohida so'zlarga ajratadi.
   List<String> get genreNames {
     final names = <String>{};
     for (final g in genres) {
@@ -78,7 +75,7 @@ class SeriesModel {
 class BannerModel {
   final String? image;
   final SeriesModel? movie;
-  final int? id; // BannerResponseDto uchun
+  final int? id;
   final int? seriesId;
   final String? seriesTitle;
 

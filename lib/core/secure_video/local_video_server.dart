@@ -6,12 +6,6 @@ import 'package:path_provider/path_provider.dart';
 
 import 'video_key_store.dart';
 
-/// Yuklangan (shifrlangan) qismlarni pleyerga uzatuvchi lokal HTTP server.
-///
-/// Diskdagi bo'laklar shifrlangan holda qoladi. Pleyer (ffmpeg) playlist'dagi
-/// `#EXT-X-KEY` orqali kalitni shu serverdan oladi va bo'laklarni xotirada ochadi.
-/// Server faqat 127.0.0.1 da ishlaydi va har ishga tushganda yangi tasodifiy
-/// token bilan himoyalanadi — boshqa ilovalar manzilni topa olmaydi.
 class LocalVideoServer {
   LocalVideoServer._();
   static final instance = LocalVideoServer._();
@@ -24,7 +18,6 @@ class LocalVideoServer {
     return List.generate(24, (_) => r.nextInt(16).toRadixString(16)).join();
   }
 
-  /// Qism uchun pleyerga beriladigan manzil.
   Future<String> playlistUrl(int episodeId) async {
     final server = await _ensureStarted();
     return 'http://127.0.0.1:${server.port}/$_token/$episodeId/index.m3u8';
@@ -41,7 +34,6 @@ class LocalVideoServer {
   Future<void> _handle(HttpRequest req) async {
     final res = req.response;
     try {
-      // /<token>/<episodeId>/<fayl>
       final seg = req.uri.pathSegments;
       if (seg.length != 3 || seg[0] != _token) {
         res.statusCode = HttpStatus.notFound;
@@ -61,7 +53,6 @@ class LocalVideoServer {
           res.statusCode = HttpStatus.notFound;
           return;
         }
-        // Kalit qatorini faqat uzatish paytida qo'shamiz (diskdagi playlist'da kalit yo'q).
         final lines = (await file.readAsString()).split('\n');
         final out = <String>[];
         for (final l in lines) {
@@ -81,7 +72,6 @@ class LocalVideoServer {
         res.headers.contentType = ContentType.binary;
         res.add(key);
       } else {
-        // seg_<n>.ts -> diskdagi s<n>.bin (shifrlangan holda uzatiladi)
         final m = RegExp(r'^seg_(\d+)\.ts$').firstMatch(name);
         final file = m == null ? null : File(p.join(dir.path, 's${m.group(1)}.bin'));
         if (file == null || !await file.exists()) {
@@ -99,7 +89,6 @@ class LocalVideoServer {
     }
   }
 
-  /// Qism fayllari saqlanadigan papka (ilovaning yopiq xotirasi).
   static Future<Directory> episodeDir(int episodeId) async {
     final base = await getApplicationSupportDirectory();
     return Directory(p.join(base.path, 'offline', 'e$episodeId'));

@@ -13,9 +13,6 @@ import '../../subscription/widgets/purchase_sheet.dart';
 import '../../subscription/widgets/unlock_sheet.dart';
 import '../controllers/series_detail_controller.dart';
 
-/// Serial sahifasi — Figma: "03 Serial tafsilotlari" (node 1:32).
-/// Dizayndagi IMDb/KP reytingi, tavsif, yil, ulashish va menyu tugmalari qo'yilmagan:
-/// backend bu ma'lumotlarni bermaydi.
 class SeriesDetailView extends GetView<SeriesDetailController> {
   const SeriesDetailView({super.key});
 
@@ -52,7 +49,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
         final hasAccess = details?.hasAccess ?? false;
         final tgUrl = details?.telegramFreeUrl ?? series.telegramFreeUrl;
         final tgCount = details?.telegramFreeCount ?? series.telegramFreeCount ?? 0;
-        // Pullik qismlar qaysi raqamdan boshlanadi (birinchi qism bepul, qolgani pullik).
         final firstPaid = parts.firstWhereOrNull((p) => !p.free)?.episodeNumber;
 
         return Stack(
@@ -61,7 +57,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
               padding: EdgeInsets.only(bottom: 32.h),
               children: [
                 _Hero(imagePath: series.imagePath),
-                // Figma: kontent rasm ustiga 56px chiqib turadi.
                 Transform.translate(
                   offset: Offset(0, -56.h),
                   child: Padding(
@@ -100,7 +95,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                         ),
                         SizedBox(height: 16.h),
 
-                        // Figma: "Btn / Tomosha qilish".
                         _WatchButton(
                           enabled: parts.isNotEmpty,
                           label: 'Tomosha qilish'.tr,
@@ -108,7 +102,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                         ),
                         SizedBox(height: 12.h),
 
-                        // Figma: "Stats" — layk va ko'rishlar.
                         Row(
                           children: [
                             Expanded(
@@ -129,7 +122,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                           ],
                         ),
 
-                        // Telegram kartochkasi hammaga — sotib olganlarga ham ko'rinadi.
                         if (tgUrl != null) ...[
                           SizedBox(height: 16.h),
                           _telegramCard(tgUrl, tgCount),
@@ -160,7 +152,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                 else
                   ...parts.map((p) => _EpisodeTile(
                         part: p,
-                        // Qulfli qism — pleyer emas, to'g'ridan-to'g'ri to'lov oynasi.
                         onTap: () => !p.hasAccess && !p.free
                             ? showUnlockSheet(series, controller.plans)
                             : _openPlayer(episodeId: p.episodeId),
@@ -168,7 +159,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
               ],
             ),
 
-            // Figma: "Btn / Orqaga" — 40px yumaloq, xira fon.
             Positioned(
               top: top + 8.h,
               left: 16.w,
@@ -205,7 +195,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
         child: Text(text, style: _t(12, FontWeight.w600, Colors.white.withValues(alpha: 0.8), height: 16 / 12)),
       );
 
-  /// Figma: "Bepul qismlar" — chapda yashil chiziq.
   Future<void> _openTelegram(String url) async {
     final uri = Uri.tryParse(url.startsWith('http') ? url : 'https://$url');
     if (uri == null || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
@@ -213,7 +202,6 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
     }
   }
 
-  /// Qo'shimcha bepul qismlar Telegram kanalda — kartochka bosilsa kanal ochiladi.
   Widget _telegramCard(String url, int count) {
     return GestureDetector(
       onTap: () => _openTelegram(url),
@@ -297,10 +285,8 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
     );
   }
 
-  /// Figma: "Pullik bo'limlar" — obuna va shu serialni sotib olish variantlari.
   Widget _paidCard(int? firstPaid, int partCount) {
     final series = controller.series;
-    // Obuna faqat obuna tarifidagi seriallarni ochadi — boshqa seriallarda bu variant ko'rsatilmaydi.
     final plan = series.subscriptionBased == true
         ? controller.plans.firstWhereOrNull((p) => p.monthlyPrice != null)
         : null;
@@ -411,7 +397,6 @@ class _Hero extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           AppNetworkImage(imagePath, fit: BoxFit.cover),
-          // Figma: "Overlay" va "Overlay bottom".
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -531,7 +516,6 @@ class _StatButton extends StatelessWidget {
   }
 }
 
-/// Figma: "Option / Oylik obuna" va "Option / Shu serial (To'liq)".
 class _PriceOption extends StatelessWidget {
   const _PriceOption({
     required this.highlighted,

@@ -8,7 +8,6 @@ import '../../../data/models/subscription_models.dart';
 import '../../../data/providers/api_provider.dart';
 import '../widgets/purchase_sheet.dart';
 
-/// Obuna tariflari sahifasi.
 class SubscriptionView extends StatefulWidget {
   const SubscriptionView({super.key});
 

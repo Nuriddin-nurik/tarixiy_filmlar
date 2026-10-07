@@ -16,7 +16,6 @@ import 'download_controller.dart';
 import '../../subscription/widgets/unlock_sheet.dart';
 import '../../../core/utils/secure_screen.dart';
 
-/// HLS sifat varianti (masalan 720p -> .../720p/video.m3u8).
 class VideoQuality {
   final int height;
   final String url;
@@ -26,7 +25,6 @@ class VideoQuality {
 
   String get label => '${height}p';
 
-  /// Master playlist'dan `#EXT-X-STREAM-INF ... RESOLUTION=WxH` qatorlarini o'qiydi.
   static List<VideoQuality> parseMaster(String content, String masterUrl) {
     final base = masterUrl.substring(0, masterUrl.lastIndexOf('/') + 1);
     final lines = content.split('\n').map((l) => l.trim()).toList();
@@ -57,7 +55,6 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   var currentEpisode = Rxn<EpisodeModel>();
   var selectedSeason = Rxn<int>();
 
-  // Tab index (0: Barcha qism, 1: Ko'rilganlar, 2: Yuklanganlar)
   var currentTabIndex = 0.obs;
 
   Timer? _progressTimer;
@@ -65,22 +62,17 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   List<int> get seasons =>
       (episodes.map((e) => e.seasonNumber ?? 1).toSet().toList()..sort());
 
-  /// To'liq ekranga kirish: avval yo'nalishni, keyin tizim panellarini o'zgartiramiz —
-  /// bir vaqtda qilinsa Android ikki marta qayta chizadi va o'tish "sakraydi".
   static Future<void> enterFullscreen() async {
     await SystemChrome.setPreferredOrientations(
         [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
-  /// To'liq ekrandan chiqish: to'g'ridan-to'g'ri vertikalga (media_kit standarti yo'nalishni
-  /// erkin qoldirardi va sahifa bir lahza "qaysi tomonga burilay" deb sakrab olardi).
   static Future<void> exitFullscreen() async {
     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
   }
 
-  /// "Barcha qism" tabidagi son — tanlangan fasldagi qismlar.
   int get visibleEpisodesCount => selectedSeason.value == null
       ? episodes.length
       : episodes.where((e) => (e.seasonNumber ?? 1) == selectedSeason.value).length;
@@ -101,14 +93,10 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     super.onInit();
     player = Player();
     videoController = VideoController(player);
-    // Video ko'rsatilayotgan paytda skrinshot va ekran yozuvi taqiqlanadi.
     SecureScreen.enable();
-    // Pleyer sahifasi doim vertikal: gorizontal faqat to'liq ekran tugmasi orqali.
-    // (Aks holda telefon burilganda sahifa o'zini qayta qurib, o'tish sekin va notekis ko'rinadi.)
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     WidgetsBinding.instance.addObserver(this);
 
-    // Arguments: {seriesId, episodeId?, title?} yoki eski usulda faqat seriesId (int).
     final args = Get.arguments;
     int? startEpisodeId;
     if (args is Map) {
@@ -122,10 +110,8 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
       fetchEpisodes(currentSeriesId.value, startEpisodeId: startEpisodeId);
     }
 
-    // Har 15 soniyada ko'rish joyini serverga yuboramiz ("Ko'rishni davom etish" uchun).
     _progressTimer = Timer.periodic(const Duration(seconds: 15), (_) => _saveProgress());
 
-    // Qism oxirigacha ko'rilsa — keyingisini avtomatik boshlaymiz.
     _completedSub = player.stream.completed.listen((done) {
       if (done) _playNext();
     });
@@ -134,7 +120,6 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
 
   StreamSubscription<bool>? _completedSub;
 
-  /// Fasl va qism raqami bo'yicha keyingi ko'rish mumkin bo'lgan qism.
   EpisodeModel? get nextEpisode {
     final current = currentEpisode.value;
     if (current == null) return null;
@@ -151,16 +136,13 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   Future<void> _playNext() async {
     final next = nextEpisode;
     if (next == null) {
-      // Bepul qism tugadi, keyingilari qulfli — to'lov oynasini taklif qilamiz.
       if (_hasLockedAfterCurrent) showUnlockSheetFor(currentSeriesId.value);
       return;
     }
-    // Tugagan qismni "to'liq ko'rildi" deb saqlaymiz.
     await _saveProgress();
     appSnack('Keyingi qism'.tr, next.title ?? '@n-qism'.trParams({'n': '${next.episodeNumber}'}),
         duration: const Duration(seconds: 2));
     selectedSeason.value = next.seasonNumber;
-    // Yangi qism boshidan boshlanadi (oldin qisman ko'rilgan bo'lsa ham).
     await playEpisode(next, fromStart: true);
   }
 
@@ -177,7 +159,6 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
         playEpisode(start);
       }
     } catch (e) {
-      // Internet yo'q, lekin qism yuklab olingan bo'lsa — oflayn ijro etamiz.
       final dl = Get.find<DownloadController>()
           .downloads
           .firstWhereOrNull((d) => d.episodeId == startEpisodeId && d.complete);
@@ -207,8 +188,6 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     return episodes.any((e) => !e.canWatch && key(e) > key(current));
   }
 
-  /// To'lov sahifasidan qaytganda qismlar ro'yxatini yangilaymiz — to'lov o'tgan bo'lsa
-  /// qulflar darhol ochiladi. Hozir o'ynayotgan video to'xtamaydi.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed || currentSeriesId.value == 0) return;
@@ -219,18 +198,15 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
 
   Future<void> playEpisode(EpisodeModel episode, {bool fromStart = false}) async {
     if (!episode.canWatch || episode.videoUrl == null) {
-      // Qulfli qism — xabar o'rniga to'g'ridan-to'g'ri to'lov oynasi.
       await showUnlockSheetFor(currentSeriesId.value);
       return;
     }
     final sw = Stopwatch()..start();
     _logFirstFrame(sw);
-    // Oldingi qism joyini saqlash videoni ochishni kutdirmasin (ma'lumot sinxron olinadi).
     _saveProgress();
     currentEpisode.value = episode;
     qualities.clear();
 
-    // Oflayn fayl, sifatlar ro'yxati, saqlangan sifat va internet turi — hammasi bir vaqtda.
     final results = await Future.wait<Object?>([
       Get.find<DownloadController>().playbackUrl(episode.id!),
       _loadQualities(episode.videoUrl!),
@@ -238,20 +214,16 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
       Connectivity().checkConnectivity(),
     ]);
     if (_closed || currentEpisode.value?.id != episode.id) return;
-    // Yuklangan (shifrlangan) bo'lsa — lokal serverdan, internetsiz ijro etamiz.
     final offlineUrl = results[0] as String?;
     final isOffline = offlineUrl != null;
 
     String url = offlineUrl ?? episode.videoUrl!;
     playingHeight.value = 0;
     if (!isOffline) {
-      // Avval tanlangan sifat bo'lsa, o'shani ochamiz.
       qualities.value = results[1] as List<VideoQuality>;
       final preferred = results[2] as int;
       final match = qualities.firstWhereOrNull((q) => q.height == preferred);
       selectedQuality.value = match?.height ?? 0;
-      // "Avto": internet turiga qarab boshlang'ich sifatni o'zimiz tanlaymiz
-      // (mpv o'zi har doim eng yuqori sifatni oladi va pasaytirmaydi).
       final chosen = match ?? _autoQualityFor(results[3] as List<ConnectivityResult>);
       if (chosen != null) {
         url = chosen.url;
@@ -265,12 +237,10 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     if (size != null) await _prepareSurface(size.width, size.height);
     if (!kReleaseMode) debugPrint('[player] tayyorgarlik ${sw.elapsedMilliseconds}ms');
     await _openAt(url, Duration(seconds: resumeAt > 5 ? resumeAt : 0));
-    // Keyingi qismning sifatlar ro'yxatini oldindan olib qo'yamiz — u tezroq ochiladi.
     final next = nextEpisode;
     if (next?.videoUrl != null) _loadQualities(next!.videoUrl!);
   }
 
-  /// Debug: bosilgandan video haqiqatan o'ynay boshlaguncha qancha vaqt o'tganini yozadi.
   void _logFirstFrame(Stopwatch sw) {
     if (kReleaseMode) return;
     late final StreamSubscription<Duration> sub;
@@ -283,8 +253,6 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     Future.delayed(const Duration(seconds: 20), () => sub.cancel());
   }
 
-  // ───────────── ±10 soniya ─────────────
-
   Future<void> seekBy(int seconds) async {
     final s = player.state;
     var target = s.position + Duration(seconds: seconds);
@@ -293,17 +261,12 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     await player.seek(target);
   }
 
-  // ───────────── Sifat ─────────────
-
-  /// Mavjud sifatlar (Bunny HLS master playlist'dagi variantlar), balanddan pastga.
   var qualities = <VideoQuality>[].obs;
 
-  /// Tanlangan sifat balandligi (masalan 720). 0 = Avto.
   var selectedQuality = 0.obs;
 
   static const _qualityPrefsKey = 'video_quality';
 
-  /// Hozir aslida ijro etilayotgan sifat (Avto rejimida ham). 0 = noma'lum/oflayn.
   var playingHeight = 0.obs;
 
   Future<void> changeQuality(int height) async {
@@ -319,12 +282,9 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     if (chosen == null) return;
     playingHeight.value = chosen.height;
     _stalls.clear();
-    // Joriy joydan davom ettiramiz.
     await _openAt(chosen.url, player.state.position);
   }
 
-  /// Avto rejimda boshlang'ich sifat: Wi-Fi'da eng yuqorisi (720p gacha),
-  /// mobil internetda 480p atrofi — tez-tez to'xtab yuklanmasligi uchun.
   Future<VideoQuality?> _autoQuality() async =>
       _autoQualityFor(await Connectivity().checkConnectivity());
 
@@ -332,11 +292,8 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     if (qualities.isEmpty) return null;
     final wifi = net.contains(ConnectivityResult.wifi) || net.contains(ConnectivityResult.ethernet);
     final limit = wifi ? 720 : 480;
-    // qualities balanddan pastga tartiblangan.
     return qualities.firstWhereOrNull((q) => q.height <= limit) ?? qualities.last;
   }
-
-  // ───────────── Sekin internetda sifatni avtomatik pasaytirish ─────────────
 
   final _stalls = <DateTime>[];
   Timer? _stallTimer;
@@ -348,17 +305,14 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
       _stallTimer?.cancel();
       return;
     }
-    // Faqat Avto rejimda, video boshlanganidan keyin (dastlabki yuklanish hisobga olinmaydi).
     if (selectedQuality.value != 0 || _switching || playingHeight.value == 0) return;
     if (player.state.position < const Duration(seconds: 3)) return;
-    // Ochilish/sakrashdan keyingi 8 soniyadagi yuklanish normal holat.
     if (DateTime.now().difference(_openedAt) < const Duration(seconds: 8)) return;
 
     final now = DateTime.now();
     _stalls
       ..add(now)
       ..removeWhere((t) => now.difference(t) > const Duration(seconds: 60));
-    // 1 daqiqada 3 marta to'xtasa yoki bir marta 5 soniyadan ko'p yuklansa — pasaytiramiz.
     if (_stalls.length >= 3) {
       _downgrade();
     } else {
@@ -388,7 +342,6 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     return prefs.getInt(_qualityPrefsKey) ?? 0;
   }
 
-  // Bitta Dio — CDN bilan ulanish (TLS) qayta ishlatiladi; ro'yxatlar xotirada saqlanadi.
   static final _http = Dio(BaseOptions(responseType: ResponseType.plain, connectTimeout: const Duration(seconds: 5)));
   static final _qualityCache = <String, Future<List<VideoQuality>>>{};
 
@@ -396,7 +349,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     return _qualityCache[masterUrl] ??= _http.get<String>(masterUrl).then(
       (res) => VideoQuality.parseMaster(res.data ?? '', masterUrl),
       onError: (_) {
-        _qualityCache.remove(masterUrl); // xato — keyingi safar qayta urinib ko'ramiz
+        _qualityCache.remove(masterUrl);
         return const <VideoQuality>[];
       },
     );
@@ -404,17 +357,11 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
 
   static const _videoChannel = MethodChannel('com.alexmercerind/media_kit_video');
 
-  /// media_kit Android'da video chiqadigan sirtni faqat video o'lchami ma'lum bo'lgach yaratadi:
-  /// mpv avval videoni "ekransiz" ochadi, sirt paydo bo'lgach esa qayta ochib, dastlabki
-  /// bo'laklarni yana yuklaydi (~1.5 s). O'lchamni master playlist'dan bilamiz — sirtni oldindan
-  /// yaratib, mpv tayyor ekranga ochilguncha kutamiz. O'lcham keyin ham bir xil bo'lgani uchun
-  /// media_kit sirtni qayta yaratmaydi.
   Future<void> _prepareSurface(int width, int height) async {
     if (width <= 0 || height <= 0 || !GetPlatform.isAndroid) return;
     final native = player.platform;
     if (native is! NativePlayer) return;
     try {
-      // Native VideoOutput yaratilgan bo'lishi shart (VideoController ishga tushgach).
       await videoController.platform.future.timeout(const Duration(seconds: 2));
       final handle = await player.handle;
       await _videoChannel.invokeMethod('VideoOutputManager.SetSurfaceSize', {
@@ -422,31 +369,22 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
         'width': width.toString(),
         'height': height.toString(),
       });
-      // mpv video chiqishi (vo) GPU'ga ulanguncha qisqa kutamiz (odatda < 100 ms).
       for (var i = 0; i < 20; i++) {
         if (_closed) return;
         if (await native.getProperty('vo') == 'gpu') return;
         await Future.delayed(const Duration(milliseconds: 25));
       }
     } catch (_) {
-      // Sirtni oldindan tayyorlay olmasak — media_kit o'zi eski usulda tayyorlaydi.
     }
   }
 
   int _openToken = 0;
 
-  /// Videoni berilgan joydan ochadi.
-  /// HLS da `Media.start` ishlamaydi, stream xabarini kutish esa ishonchsiz (xabar
-  /// open() tugaguncha o'tib ketadi). Shuning uchun player holatini so'rab turamiz:
-  /// video yuklanib, davomiyligi ma'lum bo'lgach seek qilamiz va natijani tekshiramiz.
-  /// Video ochilayotgan/sakrayotgan payt — bu vaqtdagi yuklanish "to'xtash" hisoblanmaydi.
   DateTime _openedAt = DateTime.fromMillisecondsSinceEpoch(0);
 
-  /// Sahifa yopilib, pleyer yo'q qilingan — undan keyin video ochilmasin.
   bool _closed = false;
 
   Future<void> _openAt(String url, Duration position) async {
-    // Sifatlar yuklanayotganda foydalanuvchi sahifadan chiqib ketgan bo'lishi mumkin.
     if (_closed) return;
     final token = ++_openToken;
     _openedAt = DateTime.now();
@@ -458,16 +396,13 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     if (position <= Duration.zero) return;
 
     for (var i = 0; i < 100; i++) {
-      // Bu orada boshqa qism/sifat ochilgan yoki sahifa yopilgan bo'lsa — to'xtaymiz.
       if (token != _openToken || _closed) return;
       final s = player.state;
       if (s.duration > Duration.zero && !s.buffering) {
-        // mpv to'g'ridan-to'g'ri kerakli joydan ochgan bo'lsa — sakrash shart emas.
         if ((s.position - position).inSeconds.abs() <= 5) return;
         await player.seek(position);
         _openedAt = DateTime.now();
         await Future.delayed(const Duration(milliseconds: 400));
-        // Seek qabul qilinganini tekshiramiz, bo'lmasa yana urinamiz.
         if ((player.state.position - position).inSeconds.abs() <= 5) return;
       }
       await Future.delayed(const Duration(milliseconds: 150));
@@ -481,7 +416,6 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     try {
       await _apiProvider.saveProgress(currentSeriesId.value, ep!.id!, pos);
     } catch (_) {
-      // Progressni saqlay olmaslik tomosha qilishga xalaqit bermasligi kerak.
     }
   }
 
@@ -490,7 +424,6 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     _closed = true;
     WidgetsBinding.instance.removeObserver(this);
     SecureScreen.disable();
-    // Boshqa sahifalar uchun cheklovni olib tashlaymiz va tizim panellarini qaytaramiz.
     SystemChrome.setPreferredOrientations([]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     _progressTimer?.cancel();

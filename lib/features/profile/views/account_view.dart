@@ -7,7 +7,6 @@ import '../../../core/theme/app_colors.dart';
 import '../controllers/profile_controller.dart';
 import '../../../core/widgets/app_widgets.dart';
 
-/// Hisob ma'lumotlari + akkauntni o'chirish.
 class AccountView extends GetView<ProfileController> {
   const AccountView({super.key});
 

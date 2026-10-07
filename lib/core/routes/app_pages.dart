@@ -45,12 +45,10 @@ class AppPages {
       binding: SeriesDetailBinding(),
     ),
     GetPage(name: Routes.SUBSCRIPTION, page: () => const SubscriptionView()),
-    // Profil ichki sahifalari ProfileController/DownloadController dan foydalanadi (MainBinding/main.dart).
     GetPage(name: Routes.ACCOUNT, page: () => const AccountView()),
     GetPage(name: Routes.SETTINGS, page: () => const SettingsView()),
     GetPage(name: Routes.DOWNLOADS, page: () => const DownloadsView()),
     GetPage(name: Routes.FAQ, page: () => const FaqView()),
     GetPage(name: Routes.NOTIFICATIONS, page: () => const NotificationsView()),
-    // Qolgan sahifalar shu yerga qo'shiladi
   ];
 }

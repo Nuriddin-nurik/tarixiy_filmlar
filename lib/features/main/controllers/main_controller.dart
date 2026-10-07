@@ -9,7 +9,6 @@ class MainController extends GetxController {
   void changePage(int index) {
     currentIndex.value = index;
     if (index == 2) {
-      // Sevimlilar har ochilganda yangilanadi (serial sahifasida like bosilgan bo'lishi mumkin).
       Get.find<FavoritesController>().load();
     } else if (index == 3) {
       Get.find<ProfileController>().loadSubscription();

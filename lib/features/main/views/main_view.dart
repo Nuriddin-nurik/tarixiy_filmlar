@@ -12,8 +12,6 @@ import '../../catalog/views/catalog_view.dart';
 import '../../favorites/views/favorites_view.dart';
 import '../../profile/views/profile_view.dart';
 
-/// Suzib turuvchi pastki menyu kontent ustida turadi — ro'yxatlarning pastiga
-/// shuncha bo'sh joy qo'shiladi, oxirgi element menyu ostida qolib ketmasin.
 double get kFloatingNavSpace => 67.h + 32.h + MediaQueryData.fromView(
         WidgetsBinding.instance.platformDispatcher.views.first)
     .padding
@@ -26,7 +24,6 @@ class MainView extends GetView<MainController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      // Kontent menyu ostidan ham ko'rinadi (Figma: shaffof, xira menyu).
       extendBody: true,
       body: Obx(() {
         return IndexedStack(
@@ -70,7 +67,6 @@ class MainView extends GetView<MainController> {
     );
   }
 
-  /// Figma: "Tab / Bosh sahifa" — tanlangan tab oq 10% fonli kapsula, yashil matn.
   Widget _buildNavItem(int index, String icon, String label) {
     final isSelected = controller.currentIndex.value == index;
     final color = isSelected ? AppColors.green : Colors.white.withValues(alpha: 0.8);

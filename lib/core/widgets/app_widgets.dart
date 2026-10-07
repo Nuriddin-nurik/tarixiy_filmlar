@@ -7,7 +7,6 @@ import 'package:get/get.dart';
 import '../theme/app_colors.dart';
 import '../utils/image_url.dart';
 
-/// Backend rasm yo'li ("/uploads/...") bilan ishlaydigan tarmoq rasmi.
 class AppNetworkImage extends StatelessWidget {
   const AppNetworkImage(this.path, {super.key, this.width, this.height, this.fit = BoxFit.cover});
 
@@ -27,8 +26,6 @@ class AppNetworkImage extends StatelessWidget {
       child: Icon(Icons.movie_outlined, color: AppColors.textMuted, size: 28.sp),
     );
     if (url == null) return fallback;
-    // Serial rasmlari katta (2-3 MB PNG) — ekrandagi o'lchamiga kichraytirib xotiraga ochamiz.
-    // Aks holda har rasm to'liq o'lchamda dekodlanadi va ro'yxat varaqlanganda qotadi.
     return LayoutBuilder(builder: (context, constraints) {
       final dpr = MediaQuery.devicePixelRatioOf(context);
       final w = width ?? (constraints.hasBoundedWidth ? constraints.maxWidth : null);
@@ -47,7 +44,6 @@ class AppNetworkImage extends StatelessWidget {
   }
 }
 
-/// Assets/icons dagi Figma SVG ikonkasi. [color] berilsa, ikonka shu rangga bo'yaladi.
 class AppIcon extends StatelessWidget {
   const AppIcon(this.name, {super.key, this.size = 18, this.color});
 
@@ -66,9 +62,6 @@ class AppIcon extends StatelessWidget {
   }
 }
 
-/// Bo'lim sarlavhasi (Figma: "Section header").
-/// Oddiy ko'rinish: 18px qalin sarlavha + kichik oltin ikonka, ostida izoh, o'ngda "Barchasi ›".
-/// [accentBar] — "Ko'rishni davom etish" uslubi: chapda qizil chiziq va 16px sarlavha.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
     super.key,
@@ -83,7 +76,6 @@ class SectionHeader extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onSeeAll;
 
-  /// Sarlavha yonidagi kichik ikonka nomi (assets/icons), masalan 'crown_small' yoki 'gold_dot'.
   final String? icon;
   final bool accentBar;
 
@@ -122,7 +114,6 @@ class SectionHeader extends StatelessWidget {
     );
 
     return Padding(
-      // Figma: bo'lim 16px + sarlavha 4px ichki chekinish.
       padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Row(
         crossAxisAlignment: accentBar ? CrossAxisAlignment.center : CrossAxisAlignment.end,
@@ -167,7 +158,6 @@ class SectionHeader extends StatelessWidget {
   }
 }
 
-/// Bo'sh holat (ma'lumot yo'q / tez kunda) uchun.
 class EmptyState extends StatelessWidget {
   const EmptyState({super.key, required this.icon, required this.title, this.message, this.action});
 
@@ -218,7 +208,6 @@ String formatDuration(int seconds) {
   return '@m daq'.trParams({'m': '$m'});
 }
 
-/// 35000 -> "35 000 so'm"
 String formatSom(int amount) {
   final digits = amount.toString();
   final buf = StringBuffer();
@@ -235,7 +224,6 @@ String formatCount(int n) {
   return '$n';
 }
 
-/// Qorong'i temaga mos xabar (Get.snackbar sukut bo'yicha qora matn bilan chiqadi).
 void appSnack(String title, String message, {Duration? duration, Color? colorText, Color? backgroundColor}) {
   Get.snackbar(
     title,
@@ -249,7 +237,6 @@ void appSnack(String title, String message, {Duration? duration, Color? colorTex
   );
 }
 
-/// Kvadrat bo'lmagan Figma SVG (fon effektlari va h.k.), asl ranglari bilan.
 class SvgIcon extends StatelessWidget {
   const SvgIcon(this.name, {super.key, required this.width, required this.height});
 

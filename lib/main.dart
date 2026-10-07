@@ -16,26 +16,19 @@ import 'features/player/controllers/download_controller.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // MediaKit ni ishga tushirish (Video player uchun)
   MediaKit.ensureInitialized();
 
-  // Android'da birinchi kadrda ekran o'lchami 0 bo'ladi, shunda .sp ham 0 chiqib
-  // TextField yiqiladi. O'lcham aniq bo'lguncha kutamiz.
   await ScreenUtil.ensureScreenSize();
 
-  // Oldin kirgan foydalanuvchini to'g'ridan-to'g'ri bosh sahifaga olib o'tamiz.
   final prefs = await SharedPreferences.getInstance();
   final loggedIn = (prefs.getString('access_token') ?? '').isNotEmpty;
 
   final locale = await LocaleService.load();
 
-  // Yuklanmalar butun ilova bo'ylab (pleyer, profil, sozlamalar) ishlatiladi.
-  // Ilova yopilganda ham yuklashni davom ettiruvchi foreground service sozlamalari.
   DownloadController.initService();
   Get.put(DownloadController(), permanent: true);
   final notifications = Get.put(NotificationsController(), permanent: true);
 
-  // Push bildirishnomalar (Firebase). Login qilingan bo'lsa token serverga yuboriladi.
   await PushService.init();
   if (loggedIn) {
     PushService.registerToken();
@@ -54,17 +47,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: const Size(390, 844), // Figma o'lchami
+      designSize: const Size(390, 844),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Tarixiy Kinolar',
-          // Butun ilova qorong'i: standart matn va ikonka ranglari oq bo'ladi.
           theme: ThemeData(
             brightness: Brightness.dark,
-            fontFamily: AppFonts.inter, // Figma: butun ilova Inter shriftida
+            fontFamily: AppFonts.inter,
             scaffoldBackgroundColor: AppColors.background,
             colorScheme: const ColorScheme.dark(
               primary: AppColors.green,

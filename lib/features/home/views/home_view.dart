@@ -16,7 +16,6 @@ import '../../main/views/main_view.dart';
 import '../controllers/home_controller.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 
-/// Bosh sahifa — Figma: "02 Bosh sahifa" (node 2:2).
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
@@ -73,15 +72,10 @@ class HomeView extends GetView<HomeController> {
               backgroundColor: AppColors.surface,
               onRefresh: controller.fetchHomeData,
               child: ListView(
-                // Banner yuqoridagi xira panel tugagan joydan boshlanadi (aktyor yuzi xira ostida
-                // qolmasin); pastga surilganda esa panel ostiga kiradi.
-                // Pastda — suzib turuvchi menyu ostida kontent qolib ketmasligi uchun joy.
                 padding: EdgeInsets.only(top: _TopBar.heightOf(context), bottom: kFloatingNavSpace),
                 children: [
                   if (banners.isNotEmpty) _HeroCarousel(banners: banners),
 
-                  // Tartib: banner → "Ko'rishni davom etish" (faqat ko'rilgan qism bo'lsa) →
-                  // seriallar (janrlar bo'yicha) → "Janrlar".
                   if (controller.continueWatching.isNotEmpty)
                     Padding(
                       padding: EdgeInsets.only(top: 16.h, bottom: 28.h),
@@ -156,11 +150,9 @@ class HomeView extends GetView<HomeController> {
   }
 }
 
-/// Figma: "Header (fixed, blur)" — logo, qidiruv va bildirishnoma.
 class _TopBar extends StatelessWidget {
   const _TopBar();
 
-  /// Panel balandligi: status bar + 8 + logo (36) + 16. Banner shu joydan boshlanadi.
   static double heightOf(BuildContext context) => MediaQuery.of(context).padding.top + 8.h + 36.h + 16.h;
 
   @override
@@ -203,7 +195,6 @@ class _TopBar extends StatelessWidget {
                       clipBehavior: Clip.none,
                       children: [
                         AppIcon('bell', size: 18.w),
-                        // Figma: "Unread dot" — qizil nuqta, qora hoshiya.
                         if (unread > 0)
                           Positioned(
                             right: -4.w,
@@ -275,7 +266,6 @@ class _HeroCarouselState extends State<_HeroCarousel> {
             itemCount: widget.banners.length,
             itemBuilder: (_, i) => _HeroItem(banner: widget.banners[i], height: height),
           ),
-          // Figma: "Slider dots" — faol nuqta 20×6 oltin, qolganlari 6×6 oq 30%.
           if (widget.banners.length > 1)
             Positioned(
               bottom: 26.h,
@@ -311,8 +301,6 @@ class _HeroItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final movie = banner.movie;
-    // Figma'dagi "USMONLI / BUYUK SALTANAT" kabi: birinchi so'z — katta sarlavha,
-    // qolgan so'zlar — ostidagi kichik qator ("Mehmed Fathlar Sultoni" → MEHMED / FATHLAR SULTONI).
     final words = (movie?.title ?? banner.seriesTitle ?? '').trim().split(RegExp(r'\s+'));
     final title = words.first;
     final subtitle = words.skip(1).join(' ');
@@ -323,8 +311,6 @@ class _HeroItem extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           AppNetworkImage(banner.image ?? movie?.imagePath, height: height),
-          // Figma: "Overlay" gradienti. Banner endi panel ostida emas, shuning uchun tepasi
-          // deyarli ochiq (oldin 80% qora edi — aktyor yuzi ko'rinmay qolardi).
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -347,7 +333,6 @@ class _HeroItem extends StatelessWidget {
             bottom: 48.h,
             child: Column(
               children: [
-                // Figma: "Badge / Tavsiya etiladi".
                 ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: BackdropFilter(
@@ -414,7 +399,6 @@ class _HeroItem extends StatelessWidget {
   }
 }
 
-/// Figma: "Card / Adolat yo'lida" — 225×128 rasm, oltin progress chizig'i.
 class _ContinueCard extends StatelessWidget {
   const _ContinueCard({required this.item});
   final ContinueWatchingModel item;
@@ -502,7 +486,6 @@ class _PosterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Poster 125×175 + 8 oraliq + ikki qator matn (15+2+15) + 4 pastki chekinish.
     return SizedBox(
       height: 175.h + 8.h + 34.sp + 4.h,
       child: ListView.separated(
@@ -516,7 +499,6 @@ class _PosterRow extends StatelessWidget {
   }
 }
 
-/// Figma: "Poster" — 125×175, burchak 12, yashil belgi. Bosh sahifa va katalogda ishlatiladi.
 class SeriesPosterCard extends StatelessWidget {
   const SeriesPosterCard({super.key, required this.series, this.width});
   final SeriesModel series;
@@ -579,14 +561,12 @@ class SeriesPosterCard extends StatelessWidget {
   }
 }
 
-/// Figma: "Genre / Sultonlar" — 64×64 ikonka qutisi va nomi.
 class _GenreChip extends StatelessWidget {
   const _GenreChip({required this.name, required this.onTap, this.highlighted = false});
   final String name;
   final VoidCallback onTap;
   final bool highlighted;
 
-  /// Janr nomiga mos Figma ikonkasi (backend janrlari erkin matn, shuning uchun kalit so'z bo'yicha).
   static String _iconFor(String name) {
     final n = name.toLowerCase();
     if (n.contains('sulton') || n.contains('saltanat')) return 'genre_sultonlar';

@@ -1,21 +1,16 @@
 import 'package:get/get.dart';
 
-/// Tarjimalar. Kalit — o'zbekcha matnning o'zi, shuning uchun o'zbek tili uchun
-/// alohida lug'at shart emas (kalit o'zi ko'rsatiladi). Yangi matn qo'shsangiz,
-/// `'Matn'.tr` deb yozing va bu yerga ruscha tarjimasini qo'shing.
 class AppTranslations extends Translations {
   @override
   Map<String, Map<String, String>> get keys => {'ru_RU': _ru};
 }
 
 const Map<String, String> _ru = {
-  // Navigatsiya
   "Bosh sahifa": "Главная",
   "Epizodlar": "Эпизоды",
   "Sevimlilar": "Избранное",
   "Profil": "Профиль",
 
-  // Login
   "Xush kelibsiz": "Добро пожаловать",
   "Sevimli tarixiy serial va durdona filmlaringizni yuqori sifatda tomosha qilish uchun hisobingizga kiring":
       "Войдите в аккаунт, чтобы смотреть любимые исторические сериалы и фильмы в высоком качестве",
@@ -30,7 +25,6 @@ const Map<String, String> _ru = {
   "Sessiya tugadi": "Сеанс завершён",
   "Iltimos, qaytadan kiring": "Пожалуйста, войдите снова",
 
-  // Bosh sahifa
   "Bildirishnomalar": "Уведомления",
   "Hammasini o'qish": "Прочитать все",
   "Hozircha yangi bildirishnoma yo'q": "Новых уведомлений пока нет",
@@ -53,7 +47,6 @@ const Map<String, String> _ru = {
   "Ma'lumotlarni yuklab bo'lmadi.": "Не удалось загрузить данные.",
   "Ma'lumotlarni yuklab bo'lmadi. Internetni tekshiring.": "Не удалось загрузить данные. Проверьте интернет.",
 
-  // Katalog / Sevimlilar
   "Seriallar": "Сериалы",
   "Serial nomini qidiring...": "Поиск по названию...",
   "Hech narsa topilmadi": "Ничего не найдено",
@@ -61,7 +54,6 @@ const Map<String, String> _ru = {
   "Serial sahifasida 👍 tugmasini bosing, u shu yerda paydo bo'ladi.":
       "Нажмите 👍 на странице сериала, и он появится здесь.",
 
-  // Serial sahifasi
   "Dastlabki @n ta qism BEPUL": "Первые @n серий БЕСПЛАТНО",
   "Qismlar": "Серии",
   "Hozircha qismlar yo'q": "Серий пока нет",
@@ -85,7 +77,6 @@ const Map<String, String> _ru = {
   "@n ta qism • @m oy": "@n серий • @m мес.",
   "so'm": "сум",
   "Pixy orqali xavfsiz to'lov": "Безопасная оплата через Pixy",
-  // Pleyer
   "@s-FASL • @e-QISM": "СЕЗОН @s • СЕРИЯ @e",
   "Barcha qism": "Все серии",
   "Faslni tanlang:": "Выберите сезон:",
@@ -111,7 +102,6 @@ const Map<String, String> _ru = {
   "@h soat @m daq": "@h ч @m мин",
   "@m daq": "@m мин",
 
-  // Obuna / to'lov
   "Obuna": "Подписка",
   "Premium obuna": "Премиум подписка",
   "Barcha seriallarni cheklovsiz ko'ring": "Смотрите все сериалы без ограничений",
@@ -136,7 +126,6 @@ const Map<String, String> _ru = {
   "To'lov Pixy orqali amalga oshiriladi. Narxga 4% komissiya qo'shiladi.":
       "Оплата проходит через Pixy. К цене добавляется комиссия 4%.",
 
-  // Profil
   "PROFIL": "ПРОФИЛЬ",
   "Mehmon": "Гость",
   "Hisob ma'lumotlari": "Данные аккаунта",
@@ -170,7 +159,6 @@ const Map<String, String> _ru = {
   "Uzaytirish": "Продлить",
   "SOTIB OLINGAN SERIALLAR": "КУПЛЕННЫЕ СЕРИАЛЫ",
   "Serial topilmadi": "Сериал не найден",
-  // Hisob
   "Ism": "Имя",
   "Foydalanuvchi ID": "ID пользователя",
   "Kirish usuli": "Способ входа",
@@ -186,7 +174,6 @@ const Map<String, String> _ru = {
   "Ma'lumotlaringiz o'chirildi": "Ваши данные удалены",
   "Akkauntni o'chirib bo'lmadi. Keyinroq urinib ko'ring.": "Не удалось удалить аккаунт. Попробуйте позже.",
 
-  // Sozlamalar / Yuklanmalar
   "Rasmlar keshini tozalash": "Очистить кэш изображений",
   "Tayyor": "Готово",
   "Kesh tozalandi": "Кэш очищен",
@@ -210,7 +197,6 @@ const Map<String, String> _ru = {
   "Qismni oflayn ko'rish uchun pleyer sahifasidagi yuklab olish tugmasini bosing.":
       "Чтобы смотреть офлайн, нажмите кнопку загрузки на странице плеера.",
 
-  // FAQ
   "Obunani qanday sotib olaman?": "Как оформить подписку?",
   "Profil → Premium obuna → «Ulanish» tugmasini bosing, muddatni tanlang va Pixy orqali to'lang. To'lovdan so'ng ilovaga qaytib, sahifani yangilang.":
       "Профиль → Премиум подписка → нажмите «Подключить», выберите срок и оплатите через Pixy. После оплаты вернитесь в приложение и обновите страницу.",
