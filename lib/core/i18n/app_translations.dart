@@ -155,6 +155,8 @@ const Map<String, String> _ru = {
   "Bepul qismlar Telegram'da": 'Бесплатные серии в Telegram',
   "Kanalga o'ting va bepul tomosha qiling": 'Перейдите в канал и смотрите бесплатно',
   "O'tish": 'Перейти',
+  "Internet o'chdi": 'Нет интернета',
+  "Siz oflayn rejimdasiz. Yuklanganlar bo'limiga o'tishni xohlaysizmi?": 'Вы офлайн. Перейти в загрузки?',
   '@n ta qism bepul': '@n серий бесплатно',
   '1–@n-qismlar': 'Серии 1–@n',
   'Telegram kanalida': 'в Telegram-канале',
