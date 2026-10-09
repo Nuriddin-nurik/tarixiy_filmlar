@@ -22,6 +22,9 @@ class ApiConstants {
   static String getEpisodes(int seriesId) => '/series/$seriesId/episodes';
   static String seriesDetails(int seriesId) => '/series/$seriesId';
   static String toggleLike(int seriesId) => '/series/$seriesId/like';
+  static String seriesComments(int seriesId) => '/series/$seriesId/comments';
+  static String comment(int id) => '/comments/$id';
+  static String commentReport(int id) => '/comments/$id/report';
   static String saveProgress(int seriesId, int episodeId) =>
       '/series/$seriesId/episode/$episodeId/progress';
 }

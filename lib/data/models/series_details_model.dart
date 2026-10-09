@@ -46,6 +46,7 @@ class SeriesDetailsModel {
   final int viewCount;
   final String? telegramFreeUrl;
   final int? telegramFreeCount;
+  final int commentCount;
 
   SeriesDetailsModel({
     this.id,
@@ -57,6 +58,7 @@ class SeriesDetailsModel {
     this.viewCount = 0,
     this.telegramFreeUrl,
     this.telegramFreeCount,
+    this.commentCount = 0,
   });
 
   factory SeriesDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -72,6 +74,7 @@ class SeriesDetailsModel {
       viewCount: (json['viewCount'] as num?)?.toInt() ?? 0,
       telegramFreeUrl: json['telegramFreeUrl'],
       telegramFreeCount: (json['telegramFreeCount'] as num?)?.toInt(),
+      commentCount: (json['commentCount'] as num?)?.toInt() ?? 0,
     );
   }
 

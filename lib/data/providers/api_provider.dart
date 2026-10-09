@@ -7,6 +7,7 @@ import '../models/series_details_model.dart';
 import '../models/continue_watching_model.dart';
 import '../models/subscription_models.dart';
 import '../models/notification_model.dart';
+import '../models/comment_model.dart';
 
 class ApiProvider {
   final DioClient _dioClient = DioClient();
@@ -49,6 +50,23 @@ class ApiProvider {
     final data = response.data as Map<String, dynamic>;
     return (data['liked'] as bool? ?? false, (data['likeCount'] as num?)?.toInt() ?? 0);
   }
+
+  Future<CommentPageModel> getComments(int seriesId, {int page = 0, int size = 20}) async {
+    final response = await _dioClient.dio.get(
+      ApiConstants.seriesComments(seriesId),
+      queryParameters: {'page': page, 'size': size},
+    );
+    return CommentPageModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<CommentModel> addComment(int seriesId, String text) async {
+    final response = await _dioClient.dio.post(ApiConstants.seriesComments(seriesId), data: {'text': text});
+    return CommentModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<void> deleteComment(int id) => _dioClient.dio.delete(ApiConstants.comment(id));
+
+  Future<void> reportComment(int id) => _dioClient.dio.post(ApiConstants.commentReport(id));
 
   Future<List<EpisodeModel>> getEpisodes(int seriesId) async {
     final response = await _dioClient.dio.get(ApiConstants.getEpisodes(seriesId));

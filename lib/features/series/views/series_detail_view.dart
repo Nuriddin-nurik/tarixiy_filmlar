@@ -11,7 +11,9 @@ import '../../../core/widgets/app_widgets.dart';
 import '../../../data/models/series_details_model.dart';
 import '../../subscription/widgets/purchase_sheet.dart';
 import '../../subscription/widgets/unlock_sheet.dart';
+import '../controllers/comments_controller.dart';
 import '../controllers/series_detail_controller.dart';
+import '../widgets/comments_sheet.dart';
 
 class SeriesDetailView extends GetView<SeriesDetailController> {
   const SeriesDetailView({super.key});
@@ -136,6 +138,10 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                   ),
                 ),
 
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
+                  child: _CommentsPreview(controller: controller.comments),
+                ),
                 SectionHeader(title: 'Qismlar'.tr),
                 SizedBox(height: 12.h),
                 if (controller.isLoading.value)
@@ -830,3 +836,81 @@ class _TelegramBannerState extends State<_TelegramBanner> with SingleTickerProvi
     );
   }
 }
+
+class _CommentsPreview extends StatelessWidget {
+  const _CommentsPreview({required this.controller});
+  final CommentsController controller;
+
+  TextStyle _style(double size, FontWeight w, Color c) =>
+      TextStyle(fontFamily: AppFonts.jakarta, fontSize: size.sp, fontWeight: w, color: c);
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF131716),
+      borderRadius: BorderRadius.circular(12.r),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => showCommentsSheet(controller),
+        child: Container(
+          padding: EdgeInsets.all(14.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          ),
+          child: Obx(() {
+            final latest = controller.items.isNotEmpty ? controller.items.first : null;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.chat_bubble_outline_rounded, color: AppColors.gold, size: 16.sp),
+                    SizedBox(width: 8.w),
+                    Text('Izohlar'.tr, style: _style(14, FontWeight.w700, Colors.white)),
+                    SizedBox(width: 6.w),
+                    Text('${controller.total.value}', style: _style(13, FontWeight.w500, AppColors.textSecondary)),
+                    const Spacer(),
+                    if (latest != null) ...[
+                      Text('Barchasi'.tr, style: _style(12, FontWeight.w600, AppColors.seriesGreen)),
+                      Icon(Icons.chevron_right_rounded, color: AppColors.seriesGreen, size: 18.sp),
+                    ],
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                if (latest != null) ...[
+                  CommentTile(comment: latest, maxLines: 2),
+                  SizedBox(height: 12.h),
+                ],
+                GestureDetector(
+                  onTap: () => showCommentsSheet(controller, focusInput: true),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            latest == null
+                                ? "Birinchi bo'lib fikr bildiring...".tr
+                                : 'Fikringizni yozing...'.tr,
+                            style: _style(13, FontWeight.w400, AppColors.textSecondary),
+                          ),
+                        ),
+                        Icon(Icons.send_rounded, color: AppColors.seriesGreen, size: 18.sp),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
+    );
+  }
+}
+

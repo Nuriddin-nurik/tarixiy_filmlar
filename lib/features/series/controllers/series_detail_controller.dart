@@ -6,6 +6,7 @@ import '../../../data/models/series_model.dart';
 import '../../../data/models/subscription_models.dart';
 import '../../../data/providers/api_provider.dart';
 import '../../../core/widgets/app_widgets.dart';
+import 'comments_controller.dart';
 
 class SeriesDetailController extends GetxController with WidgetsBindingObserver {
   final ApiProvider _apiProvider = ApiProvider();
@@ -16,11 +17,13 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
   var liked = false.obs;
   var likeCount = 0.obs;
   var plans = <SubscriptionPlanModel>[].obs;
+  late final CommentsController comments;
 
   @override
   void onInit() {
     super.onInit();
     series = Get.arguments as SeriesModel;
+    comments = Get.put(CommentsController(series.id!), tag: 'comments_${series.id}');
     WidgetsBinding.instance.addObserver(this);
     fetchDetails();
     _loadPlans();
@@ -36,6 +39,7 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
+    Get.delete<CommentsController>(tag: 'comments_${series.id}');
     super.onClose();
   }
 
