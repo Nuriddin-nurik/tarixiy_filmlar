@@ -210,142 +210,140 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   @override
   Widget build(BuildContext context) {
     final insets = MediaQuery.of(context).viewInsets.bottom;
-    final height = MediaQuery.of(context).size.height * 0.85;
+    final height = (MediaQuery.of(context).size.height - insets) * 0.85;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: insets),
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: AppColors.seriesBg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-          border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
-        ),
-        child: Column(
-          children: [
-            SizedBox(height: 8.h),
-            Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2.r)),
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.seriesBg,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+      ),
+      child: Column(
+        children: [
+          SizedBox(height: 8.h),
+          Container(
+            width: 40.w,
+            height: 4.h,
+            decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2.r)),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 10.h, 8.w, 6.h),
+            child: Row(
+              children: [
+                Obx(() => Text(
+                      '${'Izohlar'.tr} (${c.total.value})',
+                      style: _style(16, FontWeight.w700, Colors.white),
+                    )),
+                const Spacer(),
+                IconButton(
+                  onPressed: Get.back,
+                  icon: Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 22.sp),
+                ),
+              ],
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 10.h, 8.w, 6.h),
-              child: Row(
-                children: [
-                  Obx(() => Text(
-                        '${'Izohlar'.tr} (${c.total.value})',
-                        style: _style(16, FontWeight.w700, Colors.white),
-                      )),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: Get.back,
-                    icon: Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 22.sp),
+          ),
+          Divider(height: 1, color: Colors.white.withValues(alpha: 0.06)),
+          Expanded(
+            child: Obx(() {
+              if (c.items.isEmpty && c.isLoading.value) {
+                return const Center(child: CircularProgressIndicator(color: AppColors.seriesGreen));
+              }
+              if (c.items.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.w),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textSecondary, size: 40.sp),
+                        SizedBox(height: 12.h),
+                        Text(
+                          "Hali izoh yo'q. Birinchi bo'lib fikr bildiring!".tr,
+                          textAlign: TextAlign.center,
+                          style: _style(13, FontWeight.w500, AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
-            Divider(height: 1, color: Colors.white.withValues(alpha: 0.06)),
-            Expanded(
-              child: Obx(() {
-                if (c.items.isEmpty && c.isLoading.value) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.seriesGreen));
-                }
-                if (c.items.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.w),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textSecondary, size: 40.sp),
-                          SizedBox(height: 12.h),
-                          Text(
-                            "Hali izoh yo'q. Birinchi bo'lib fikr bildiring!".tr,
-                            textAlign: TextAlign.center,
-                            style: _style(13, FontWeight.w500, AppColors.textSecondary),
+                );
+              }
+              return RefreshIndicator(
+                color: AppColors.seriesGreen,
+                onRefresh: c.refreshComments,
+                child: ListView.separated(
+                  controller: _scroll,
+                  padding: EdgeInsets.fromLTRB(16.w, 14.h, 12.w, 14.h),
+                  itemCount: c.items.length + (c.hasMore.value ? 1 : 0),
+                  separatorBuilder: (_, __) => SizedBox(height: 16.h),
+                  itemBuilder: (_, i) {
+                    if (i >= c.items.length) {
+                      return Padding(
+                        padding: EdgeInsets.all(8.w),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.seriesGreen),
                           ),
-                        ],
+                        ),
+                      );
+                    }
+                    final comment = c.items[i];
+                    return CommentTile(comment: comment, onMenu: () => _openMenu(comment));
+                  },
+                ),
+              );
+            }),
+          ),
+          Container(
+            padding:
+                EdgeInsets.fromLTRB(12.w, 8.h, 8.w, 8.h + (insets > 0 ? 0 : MediaQuery.of(context).padding.bottom)),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _input,
+                    focusNode: _focus,
+                    minLines: 1,
+                    maxLines: 4,
+                    maxLength: 1000,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: _style(14, FontWeight.w400, Colors.white),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: 'Fikringizni yozing...'.tr,
+                      hintStyle: _style(14, FontWeight.w400, AppColors.textSecondary),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.06),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20.r),
+                        borderSide: BorderSide.none,
                       ),
                     ),
-                  );
-                }
-                return RefreshIndicator(
-                  color: AppColors.seriesGreen,
-                  onRefresh: c.refreshComments,
-                  child: ListView.separated(
-                    controller: _scroll,
-                    padding: EdgeInsets.fromLTRB(16.w, 14.h, 12.w, 14.h),
-                    itemCount: c.items.length + (c.hasMore.value ? 1 : 0),
-                    separatorBuilder: (_, __) => SizedBox(height: 16.h),
-                    itemBuilder: (_, i) {
-                      if (i >= c.items.length) {
-                        return Padding(
-                          padding: EdgeInsets.all(8.w),
-                          child: const Center(
-                            child: SizedBox(
+                  ),
+                ),
+                SizedBox(width: 6.w),
+                Obx(() => IconButton(
+                      onPressed: c.isSending.value ? null : _send,
+                      icon: c.isSending.value
+                          ? const SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.seriesGreen),
-                            ),
-                          ),
-                        );
-                      }
-                      final comment = c.items[i];
-                      return CommentTile(comment: comment, onMenu: () => _openMenu(comment));
-                    },
-                  ),
-                );
-              }),
+                            )
+                          : Icon(Icons.send_rounded, color: AppColors.seriesGreen, size: 24.sp),
+                    )),
+              ],
             ),
-            Container(
-              padding: EdgeInsets.fromLTRB(12.w, 8.h, 8.w, 8.h + (insets > 0 ? 0 : MediaQuery.of(context).padding.bottom)),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _input,
-                      focusNode: _focus,
-                      minLines: 1,
-                      maxLines: 4,
-                      maxLength: 1000,
-                      textCapitalization: TextCapitalization.sentences,
-                      style: _style(14, FontWeight.w400, Colors.white),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        hintText: 'Fikringizni yozing...'.tr,
-                        hintStyle: _style(14, FontWeight.w400, AppColors.textSecondary),
-                        filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.06),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.r),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 6.w),
-                  Obx(() => IconButton(
-                        onPressed: c.isSending.value ? null : _send,
-                        icon: c.isSending.value
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.seriesGreen),
-                              )
-                            : Icon(Icons.send_rounded, color: AppColors.seriesGreen, size: 24.sp),
-                      )),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
