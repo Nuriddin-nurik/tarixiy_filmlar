@@ -297,6 +297,20 @@ class PlayerView extends GetView<PlayerController> {
         ),
         const Spacer(),
         Obx(() {
+          final rate = controller.speed.value;
+          if (rate == 1.0) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: Text('${_speedLabel(rate)}×',
+                style: TextStyle(
+                    fontFamily: AppFonts.notoSerif,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.gold,
+                    height: 1.5)),
+          );
+        }),
+        Obx(() {
           final h = controller.playingHeight.value;
           if (h == 0) return const SizedBox.shrink();
           return Container(
@@ -373,6 +387,40 @@ class PlayerView extends GetView<PlayerController> {
             option(0, 'Avto'.tr, hint: "Internet tezligiga qarab avtomatik".tr),
             for (final q in qualities) option(q.height, q.label, hint: q.height >= 720 ? 'HD' : null),
           ],
+          const SizedBox(height: 10),
+          Divider(height: 1, color: Colors.white.withValues(alpha: 0.08)),
+          const SizedBox(height: 12),
+          Text('Ijro tezligi'.tr, style: st(15, FontWeight.w700, AppColors.gold)),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Obx(() {
+              final current = controller.speed.value;
+              return Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final s in PlayerController.speeds)
+                    ChoiceChip(
+                      label: Text(s == 1.0 ? 'Oddiy'.tr : '${_speedLabel(s)}×'),
+                      selected: current == s,
+                      showCheckmark: false,
+                      onSelected: (_) {
+                        Get.back();
+                        controller.setSpeed(s);
+                      },
+                      labelStyle: st(13, FontWeight.w600, current == s ? Colors.black : Colors.white),
+                      selectedColor: AppColors.gold,
+                      backgroundColor: Colors.white.withValues(alpha: 0.08),
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                ],
+              );
+            }),
+          ),
+          const SizedBox(height: 4),
         ],
       ),
     );
@@ -382,7 +430,7 @@ class PlayerView extends GetView<PlayerController> {
       Get.dialog(
         Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 300, maxHeight: 320),
+            constraints: const BoxConstraints(maxWidth: 320, maxHeight: 400),
             child: Material(
               color: AppColors.playerCard,
               borderRadius: BorderRadius.circular(16),
@@ -593,4 +641,9 @@ class _PlayPauseButton extends StatelessWidget {
       },
     );
   }
+}
+
+String _speedLabel(double s) {
+  final text = s.toStringAsFixed(2);
+  return text.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
 }

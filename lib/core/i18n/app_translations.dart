@@ -156,6 +156,8 @@ const Map<String, String> _ru = {
   "Kanalga o'ting va bepul tomosha qiling": 'Перейдите в канал и смотрите бесплатно',
   "O'tish": 'Перейти',
   'Izohlar': 'Комментарии',
+  'Ijro tezligi': 'Скорость воспроизведения',
+  'Oddiy': 'Обычная',
   'Fikringizni yozing...': 'Напишите ваше мнение...',
   "Birinchi bo'lib fikr bildiring...": 'Оставьте первый комментарий...',
   "Hali izoh yo'q. Birinchi bo'lib fikr bildiring!": 'Комментариев пока нет. Будьте первым!',

@@ -264,6 +264,13 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   var qualities = <VideoQuality>[].obs;
 
   var selectedQuality = 0.obs;
+  final speed = 1.0.obs;
+  static const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+
+  Future<void> setSpeed(double value) async {
+    speed.value = value;
+    await player.setRate(value);
+  }
 
   static const _qualityPrefsKey = 'video_quality';
 
@@ -393,6 +400,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
       await native.setProperty('start', position > Duration.zero ? '${position.inSeconds}' : 'none');
     }
     await player.open(Media(url), play: true);
+    if (speed.value != 1.0) await player.setRate(speed.value);
     if (position <= Duration.zero) return;
 
     for (var i = 0; i < 100; i++) {
