@@ -16,6 +16,7 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
   var isLoading = true.obs;
   var liked = false.obs;
   var likeCount = 0.obs;
+  var reminded = false.obs;
   var plans = <SubscriptionPlanModel>[].obs;
   late final CommentsController comments;
 
@@ -56,6 +57,7 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
       details.value = d;
       liked.value = d.liked;
       likeCount.value = d.likeCount;
+      reminded.value = d.reminded;
       if (silent && !hadAccess && d.hasAccess) {
         appSnack("To'lov qabul qilindi".tr, 'Barcha qismlar ochildi. Yoqimli tomosha!'.tr);
       }
@@ -64,6 +66,19 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
       appSnack('Xato'.tr, "Serial ma'lumotlarini yuklab bo'lmadi".tr);
     } finally {
       isLoading(false);
+    }
+  }
+
+  Future<void> toggleReminder() async {
+    reminded.toggle();
+    try {
+      reminded.value = await _apiProvider.toggleReminder(series.id!);
+      if (reminded.value) {
+        appSnack('Eslatma yoqildi'.tr, 'Serial efirga chiqishi bilan sizga xabar beramiz'.tr);
+      }
+    } catch (_) {
+      reminded.toggle();
+      appSnack('Xato'.tr, "Eslatmani yoqib bo'lmadi".tr);
     }
   }
 

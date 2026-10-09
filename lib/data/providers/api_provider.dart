@@ -45,6 +45,11 @@ class ApiProvider {
     return SeriesDetailsModel.fromJson(response.data);
   }
 
+  Future<bool> toggleReminder(int seriesId) async {
+    final response = await _dioClient.dio.post(ApiConstants.toggleReminder(seriesId));
+    return (response.data as Map<String, dynamic>)['reminded'] as bool? ?? false;
+  }
+
   Future<(bool, int)> toggleLike(int seriesId) async {
     final response = await _dioClient.dio.post(ApiConstants.toggleLike(seriesId));
     final data = response.data as Map<String, dynamic>;

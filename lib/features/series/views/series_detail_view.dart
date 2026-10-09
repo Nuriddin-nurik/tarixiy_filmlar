@@ -97,11 +97,14 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                         ),
                         SizedBox(height: 16.h),
 
-                        _WatchButton(
-                          enabled: parts.isNotEmpty,
-                          label: 'Tomosha qilish'.tr,
-                          onTap: () => _openPlayer(episodeId: controller.resumeEpisodeId),
-                        ),
+                        if (series.isComingSoon && parts.isEmpty)
+                          _RemindButton(active: controller.reminded.value, onTap: controller.toggleReminder)
+                        else
+                          _WatchButton(
+                            enabled: parts.isNotEmpty,
+                            label: 'Tomosha qilish'.tr,
+                            onTap: () => _openPlayer(episodeId: controller.resumeEpisodeId),
+                          ),
                         SizedBox(height: 12.h),
 
                         Row(
@@ -129,7 +132,7 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                           _TelegramBanner(count: tgCount, onTap: () => _openTelegram(tgUrl)),
                         ],
 
-                        if (details != null && !hasAccess) ...[
+                        if (details != null && !hasAccess && parts.isNotEmpty) ...[
                           SizedBox(height: 12.h),
                           _paidCard(firstPaid, parts.length),
                         ],
@@ -358,6 +361,72 @@ class _Hero extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _RemindButton extends StatelessWidget {
+  const _RemindButton({required this.active, required this.onTap});
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const gold = AppColors.gold;
+    final style = TextStyle(fontFamily: AppFonts.jakarta, fontSize: 14.sp, fontWeight: FontWeight.w700, height: 20 / 14);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 6.h),
+          alignment: Alignment.center,
+          child: Text(
+            'TEZ KUNDA'.tr,
+            style: TextStyle(
+              fontFamily: AppFonts.jakarta,
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w800,
+              color: gold,
+              letterSpacing: 2,
+            ),
+          ),
+        ),
+        SizedBox(height: 6.h),
+        SizedBox(
+          height: 48.h,
+          child: Material(
+            color: active ? Colors.transparent : gold,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              side: active ? const BorderSide(color: gold, width: 1.5) : BorderSide.none,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(active ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+                      color: active ? gold : Colors.black, size: 20.sp),
+                  SizedBox(width: 8.w),
+                  Text(
+                    active ? 'Eslatma yoqilgan'.tr : 'Chiqqanda xabar berish'.tr,
+                    style: style.copyWith(color: active ? gold : Colors.black),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        SizedBox(height: 8.h),
+        Text(
+          active
+              ? "Serial efirga chiqishi bilan bildirishnoma olasiz".tr
+              : "Bosing — serial chiqqanda sizga bildirishnoma yuboramiz".tr,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: AppFonts.jakarta, fontSize: 11.sp, color: AppColors.textSecondary),
+        ),
+      ],
     );
   }
 }

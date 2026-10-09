@@ -24,6 +24,8 @@ class SeriesModel {
   final int? quarterlyPrice;
   final bool? subscriptionBased;
 
+  bool get isComingSoon => status == 'COMING_SOON';
+
   SeriesModel({
     this.id,
     this.title,

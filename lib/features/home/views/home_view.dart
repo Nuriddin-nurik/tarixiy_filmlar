@@ -45,7 +45,8 @@ class HomeView extends GetView<HomeController> {
         final data = controller.homeData.value;
         final banners = data?.banners ?? const <BannerModel>[];
         final genres = controller.seriesByGenre.entries.toList();
-        final all = controller.series;
+        final all = controller.series.where((s) => !s.isComingSoon).toList();
+        final soon = controller.series.where((s) => s.isComingSoon).toList();
         void openCatalog() => Get.find<MainController>().changePage(1);
 
         Widget genreSection(MapEntry<String, List<SeriesModel>> e, String icon, {double top = 0}) => Padding(
@@ -105,6 +106,8 @@ class HomeView extends GetView<HomeController> {
                   if (all.isNotEmpty)
                     genreSection(MapEntry('Barcha seriallar'.tr, all), 'crown_small',
                         top: controller.continueWatching.isEmpty ? 16.h : 0),
+
+                  if (soon.isNotEmpty) genreSection(MapEntry('Tez kunda'.tr, soon), 'gold_dot'),
 
                   for (var i = 0; i < genres.length; i++) genreSection(genres[i], 'gold_dot'),
 
@@ -527,6 +530,25 @@ class SeriesPosterCard extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     AppNetworkImage(series.imagePath),
+                    if (series.isComingSoon)
+                      Positioned(
+                        top: 7.h,
+                        left: 7.w,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+                          decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(4.r)),
+                          child: Text(
+                            'TEZ KUNDA'.tr,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 9.sp,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

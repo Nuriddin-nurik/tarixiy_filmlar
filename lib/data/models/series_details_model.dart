@@ -43,6 +43,7 @@ class SeriesDetailsModel {
   final bool hasAccess;
   final int likeCount;
   final bool liked;
+  final bool reminded;
   final int viewCount;
   final String? telegramFreeUrl;
   final int? telegramFreeCount;
@@ -55,6 +56,7 @@ class SeriesDetailsModel {
     this.hasAccess = false,
     this.likeCount = 0,
     this.liked = false,
+    this.reminded = false,
     this.viewCount = 0,
     this.telegramFreeUrl,
     this.telegramFreeCount,
@@ -71,6 +73,7 @@ class SeriesDetailsModel {
       hasAccess: json['hasAccess'] ?? false,
       likeCount: (json['likeCount'] as num?)?.toInt() ?? 0,
       liked: json['liked'] ?? false,
+      reminded: json['reminded'] ?? false,
       viewCount: (json['viewCount'] as num?)?.toInt() ?? 0,
       telegramFreeUrl: json['telegramFreeUrl'],
       telegramFreeCount: (json['telegramFreeCount'] as num?)?.toInt(),
