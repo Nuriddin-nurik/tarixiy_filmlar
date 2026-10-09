@@ -28,8 +28,9 @@ class AppNetworkImage extends StatelessWidget {
     if (url == null) return fallback;
     return LayoutBuilder(builder: (context, constraints) {
       final dpr = MediaQuery.devicePixelRatioOf(context);
-      final w = width ?? (constraints.hasBoundedWidth ? constraints.maxWidth : null);
-      final cacheWidth = w == null || w <= 0 ? null : (w * dpr).round();
+      final fixed = width != null && width!.isFinite ? width : null;
+      final w = fixed ?? (constraints.hasBoundedWidth ? constraints.maxWidth : null);
+      final cacheWidth = w == null || !w.isFinite || w <= 0 ? null : (w * dpr).round();
       return CachedNetworkImage(
         imageUrl: url,
         width: width,
