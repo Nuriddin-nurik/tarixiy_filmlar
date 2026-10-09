@@ -158,6 +158,7 @@ const Map<String, String> _ru = {
   'Izohlar': 'Комментарии',
   'TEZ KUNDA': 'СКОРО',
   'Tez kunda': 'Скоро',
+  'Qismlar serial efirga chiqqanda ochiladi': 'Серии откроются после выхода сериала',
   'Eslatma yoqilgan': 'Напоминание включено',
   'Chiqqanda xabar berish': 'Сообщить о выходе',
   'Serial efirga chiqishi bilan bildirishnoma olasiz': 'Вы получите уведомление, как только сериал выйдет',

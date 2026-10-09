@@ -97,7 +97,7 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                         ),
                         SizedBox(height: 16.h),
 
-                        if (series.isComingSoon && parts.isEmpty)
+                        if (series.isComingSoon)
                           _RemindButton(active: controller.reminded.value, onTap: controller.toggleReminder)
                         else
                           _WatchButton(
@@ -132,7 +132,7 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                           _TelegramBanner(count: tgCount, onTap: () => _openTelegram(tgUrl)),
                         ],
 
-                        if (details != null && !hasAccess && parts.isNotEmpty) ...[
+                        if (details != null && !hasAccess && parts.isNotEmpty && !series.isComingSoon) ...[
                           SizedBox(height: 12.h),
                           _paidCard(firstPaid, parts.length),
                         ],
@@ -147,7 +147,13 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                 ),
                 SectionHeader(title: 'Qismlar'.tr),
                 SizedBox(height: 12.h),
-                if (controller.isLoading.value)
+                if (series.isComingSoon)
+                  Padding(
+                    padding: EdgeInsets.all(24.w),
+                    child: Text("Qismlar serial efirga chiqqanda ochiladi".tr,
+                        textAlign: TextAlign.center, style: _t(13, FontWeight.w400, AppColors.textSecondary)),
+                  )
+                else if (controller.isLoading.value)
                   Padding(
                     padding: EdgeInsets.all(24.w),
                     child: const Center(child: CircularProgressIndicator(color: _green)),
