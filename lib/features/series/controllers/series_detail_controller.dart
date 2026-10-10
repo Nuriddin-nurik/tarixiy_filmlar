@@ -96,9 +96,15 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
   }
 
   int? get resumeEpisodeId {
-    final parts = details.value?.parts ?? const [];
+    final parts = [...?details.value?.parts]
+      ..sort((a, b) {
+        final s = (a.seasonNumber ?? 1).compareTo(b.seasonNumber ?? 1);
+        return s != 0 ? s : (a.episodeNumber ?? 0).compareTo(b.episodeNumber ?? 0);
+      });
     if (parts.isEmpty) return null;
-    final started = parts.where((p) => p.watchedSeconds > 0).toList();
-    return (started.isNotEmpty ? started.last : parts.first).episodeId;
+    final watchable = parts.where((p) => p.hasAccess || p.free).toList();
+    if (watchable.isEmpty) return parts.first.episodeId;
+    final started = watchable.where((p) => p.watchedSeconds > 0).toList();
+    return (started.isNotEmpty ? started.last : watchable.first).episodeId;
   }
 }
