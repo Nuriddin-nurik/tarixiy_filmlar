@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
@@ -121,6 +122,27 @@ class ProfileView extends GetView<ProfileController> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(color: _soft, fontSize: 14.sp, height: 20 / 14)),
+                              if (user?.id != null)
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    Clipboard.setData(ClipboardData(text: '${user.id}'));
+                                    appSnack('Nusxa olindi'.tr, '${user.id}');
+                                  },
+                                  child: Padding(
+                                    padding: EdgeInsets.only(top: 4.h),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text('ID: ${user!.id}',
+                                            style: TextStyle(
+                                                color: AppColors.green, fontSize: 13.sp, fontWeight: FontWeight.w600)),
+                                        SizedBox(width: 6.w),
+                                        Icon(Icons.copy_rounded, color: _soft, size: 14.sp),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
