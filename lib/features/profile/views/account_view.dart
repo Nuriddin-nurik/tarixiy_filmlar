@@ -21,7 +21,7 @@ class AccountView extends GetView<ProfileController> {
         children: [
           _field('Ism'.tr, user?.username ?? '—'),
           _field('Email', user?.email ?? '—'),
-          _field('Foydalanuvchi ID'.tr, user?.userId?.toString() ?? '—', copyable: true),
+          _field('Foydalanuvchi ID'.tr, user?.id?.toString() ?? '—', copyable: true),
           _field('Kirish usuli'.tr, 'Google'),
           SizedBox(height: 32.h),
           Text(
