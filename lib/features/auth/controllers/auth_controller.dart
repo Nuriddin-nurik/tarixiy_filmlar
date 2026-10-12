@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,31 +10,11 @@ import '../../notifications/controllers/notifications_controller.dart';
 import '../../../core/widgets/app_widgets.dart';
 
 class AuthController extends GetxController {
-  static const _serverClientIds = [
-    '490587248988-5smen6r7i94f2mnc0h5aunmuu1jopk03.apps.googleusercontent.com',
-    '490587248988-bfl9t0t4nu3gipk2ojn6iiv76i10ffhk.apps.googleusercontent.com',
-    '428242414058-voehuh35ufk65lu8t8cuqbrn57h042vk.apps.googleusercontent.com',
-  ];
-  static const _clientPrefsKey = 'google_client_index';
+  static const _serverClientId =
+      '428242414058-voehuh35ufk65lu8t8cuqbrn57h042vk.apps.googleusercontent.com';
 
-  Future<GoogleSignInAccount?> _signInAccount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getInt(_clientPrefsKey) ?? 0;
-    final order = [saved, ...List.generate(_serverClientIds.length, (i) => i).where((i) => i != saved)];
-    PlatformException? lastError;
-    for (final i in order) {
-      final client = GoogleSignIn(scopes: const ['email', 'profile'], serverClientId: _serverClientIds[i]);
-      try {
-        final account = await client.signIn();
-        if (account != null) await prefs.setInt(_clientPrefsKey, i);
-        return account;
-      } on PlatformException catch (e) {
-        lastError = e;
-        await client.signOut().catchError((_) => null);
-      }
-    }
-    throw lastError ?? PlatformException(code: 'sign_in_failed');
-  }
+  Future<GoogleSignInAccount?> _signInAccount() =>
+      GoogleSignIn(scopes: const ['email', 'profile'], serverClientId: _serverClientId).signIn();
 
   var isLoading = false.obs;
 
