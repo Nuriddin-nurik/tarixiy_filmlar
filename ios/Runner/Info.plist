@@ -45,5 +45,12 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Kinolarni televizorga (Chromecast) uzatish uchun Wi-Fi tarmog'idagi qurilmalarni topish kerak.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_CC1AD845._googlecast._tcp</string>
+		<string>_googlecast._tcp</string>
+	</array>
 </dict>
 </plist>

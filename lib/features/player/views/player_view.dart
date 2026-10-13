@@ -11,6 +11,7 @@ import '../../../data/models/episode_model.dart';
 import '../controllers/player_controller.dart';
 import '../controllers/download_controller.dart';
 import '../widgets/download_button.dart';
+import '../widgets/cast_panel.dart';
 
 class PlayerView extends GetView<PlayerController> {
   const PlayerView({super.key});
@@ -53,7 +54,16 @@ class PlayerView extends GetView<PlayerController> {
       body: SafeArea(
         child: Column(
           children: [
-            AspectRatio(aspectRatio: 16 / 9, child: ColoredBox(color: Colors.black, child: video)),
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ColoredBox(color: Colors.black, child: video),
+                  Obx(() => controller.casting.value ? CastPanel(controller: controller) : const SizedBox.shrink()),
+                ],
+              ),
+            ),
 
             Expanded(
               child: Obx(() {
@@ -267,6 +277,13 @@ class PlayerView extends GetView<PlayerController> {
             onPressed: Get.back,
           ),
         const Spacer(),
+        if (!fullscreen && controller.castAvailable)
+          MaterialCustomButton(
+            icon: circle(36, Colors.black.withValues(alpha: 0.4), const Icon(Icons.cast_rounded, color: Colors.white, size: 18)),
+            iconSize: 36,
+            onPressed: () => showCastSheet(controller),
+          ),
+        if (!fullscreen && controller.castAvailable) const SizedBox(width: 8),
         MaterialCustomButton(
           icon: circle(36, Colors.black.withValues(alpha: 0.4), const AppIcon('player_more', size: 18)),
           iconSize: 36,

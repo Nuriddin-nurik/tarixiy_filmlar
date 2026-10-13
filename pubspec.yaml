@@ -47,6 +47,7 @@ dependencies:
   flutter_foreground_task: ^11.0.3
   connectivity_plus: ^7.3.1
   flutter_svg: ^2.3.0
+  flutter_chrome_cast: ^2.0.0
 
 
 

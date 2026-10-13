@@ -11,6 +11,7 @@ import 'core/i18n/locale_service.dart';
 import 'core/theme/app_colors.dart';
 import 'core/network/connectivity_watcher.dart';
 import 'core/notifications/push_service.dart';
+import 'core/cast/cast_service.dart';
 import 'features/notifications/controllers/notifications_controller.dart';
 import 'features/player/controllers/download_controller.dart';
 
@@ -29,6 +30,7 @@ Future<void> main() async {
   DownloadController.initService();
   Get.put(DownloadController(), permanent: true);
   Get.put(ConnectivityWatcher(), permanent: true);
+  await Get.putAsync(() => CastService().init(), permanent: true);
   final notifications = Get.put(NotificationsController(), permanent: true);
 
   await PushService.init();

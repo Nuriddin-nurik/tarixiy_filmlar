@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 
 import '../../../data/models/episode_model.dart';
 import '../../../data/providers/api_provider.dart';
@@ -15,6 +16,7 @@ import '../../../core/widgets/app_widgets.dart';
 import 'download_controller.dart';
 import '../../subscription/widgets/unlock_sheet.dart';
 import '../../../core/utils/secure_screen.dart';
+import '../../../core/cast/cast_service.dart';
 
 class VideoQuality {
   final int height;
@@ -116,6 +118,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
       if (done) _playNext();
     });
     _bufferingSub = player.stream.buffering.listen(_onBuffering);
+    _initCast();
   }
 
   StreamSubscription<bool>? _completedSub;
@@ -233,6 +236,13 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     _stalls.clear();
 
     final resumeAt = fromStart ? 0 : (episode.watchedSeconds ?? 0);
+    _localUrl = url;
+    if (casting.value) {
+      _localOpened = false;
+      await _castEpisode(episode, Duration(seconds: resumeAt > 5 ? resumeAt : 0));
+      return;
+    }
+    _localOpened = true;
     final size = qualities.firstWhereOrNull((q) => q.url == url);
     if (size != null) await _prepareSurface(size.width, size.height);
     if (!kReleaseMode) debugPrint('[player] tayyorgarlik ${sw.elapsedMilliseconds}ms');
@@ -269,6 +279,10 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
 
   Future<void> setSpeed(double value) async {
     speed.value = value;
+    if (casting.value) {
+      await _remote(() => GoogleCastRemoteMediaClient.instance.setPlaybackRate(value));
+      return;
+    }
     await player.setRate(value);
   }
 
@@ -288,6 +302,8 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
         : qualities.firstWhereOrNull((q) => q.height == height);
     if (chosen == null) return;
     playingHeight.value = chosen.height;
+    _localUrl = chosen.url;
+    if (casting.value) return;
     _stalls.clear();
     await _openAt(chosen.url, player.state.position);
   }
@@ -417,9 +433,149 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
+  final casting = false.obs;
+  final castPlaying = false.obs;
+  final castBuffering = false.obs;
+  final castPosition = Duration.zero.obs;
+  final castDuration = Duration.zero.obs;
+
+  String? _localUrl;
+  bool _localOpened = false;
+  int? _castEpisodeId;
+  bool _castFinishHandled = false;
+  Worker? _castConnectedWorker;
+  StreamSubscription<GoggleCastMediaStatus?>? _castStatusSub;
+  StreamSubscription<Duration>? _castPositionSub;
+
+  CastService? get _cast => Get.isRegistered<CastService>() ? CastService.to : null;
+
+  bool get castAvailable => _cast?.available.value ?? false;
+
+  bool get canCast {
+    final ep = currentEpisode.value;
+    return ep != null && ep.canWatch && ep.videoUrl != null && ep.videoUrl != 'offline';
+  }
+
+  void _initCast() {
+    final cast = _cast;
+    if (cast == null || !cast.available.value) return;
+    _castConnectedWorker = ever<bool>(cast.connected, _onCastConnection);
+    _castStatusSub = GoogleCastRemoteMediaClient.instance.mediaStatusStream.listen(_onCastStatus);
+    _castPositionSub = GoogleCastRemoteMediaClient.instance.playerPositionStream.listen((p) {
+      if (casting.value) castPosition.value = p;
+    });
+    if (cast.connected.value) casting.value = true;
+  }
+
+  Future<void> _onCastConnection(bool connected) async {
+    if (_closed) return;
+    if (connected) {
+      final ep = currentEpisode.value;
+      casting.value = true;
+      if (ep == null) return;
+      if (!canCast) {
+        appSnack('Televizorga uzatish'.tr, "Bu qismni televizorga uzatib bo'lmaydi".tr);
+        return;
+      }
+      await _castEpisode(ep, player.state.position);
+    } else if (casting.value) {
+      casting.value = false;
+      _castEpisodeId = null;
+      final at = castPosition.value;
+      final url = _localUrl;
+      if (url == null) return;
+      if (_localOpened) {
+        await player.seek(at);
+        await player.play();
+      } else {
+        _localOpened = true;
+        await _openAt(url, at);
+      }
+    }
+  }
+
+  Future<void> _castEpisode(EpisodeModel ep, Duration at) async {
+    if (!canCast) return;
+    await player.pause();
+    _castEpisodeId = ep.id;
+    _castFinishHandled = false;
+    castPosition.value = at;
+    castDuration.value = Duration(seconds: ep.durationSeconds ?? 0);
+    final subtitle = [
+      '@s-FASL • @e-QISM'.trParams({'s': '${ep.seasonNumber ?? 1}', 'e': '${ep.episodeNumber ?? ''}'}),
+      if (ep.title != null && seriesTitle.value.isNotEmpty) ep.title!,
+    ].join('  ');
+    final thumb = ep.thumbnail;
+    final ok = await _remote(() => GoogleCastRemoteMediaClient.instance.loadMedia(
+          GoogleCastMediaInformation(
+            contentId: '${ep.id}',
+            contentUrl: Uri.parse(ep.videoUrl!),
+            contentType: 'application/x-mpegURL',
+            streamType: CastMediaStreamType.buffered,
+            metadata: GoogleCastGenericMediaMetadata(
+              title: seriesTitle.value.isNotEmpty ? seriesTitle.value : (ep.title ?? ''),
+              subtitle: subtitle,
+              images: thumb != null && thumb.startsWith('http') ? [GoogleCastImage(url: Uri.parse(thumb))] : null,
+            ),
+          ),
+          autoPlay: true,
+          playPosition: at,
+          playbackRate: speed.value,
+        ));
+    if (!ok) appSnack('Xato'.tr, "Televizorga uzatib bo'lmadi".tr);
+  }
+
+  void _onCastStatus(GoggleCastMediaStatus? status) {
+    if (!casting.value || status == null) return;
+    final state = status.playerState;
+    castPlaying.value = state == CastMediaPlayerState.playing;
+    castBuffering.value = state == CastMediaPlayerState.buffering || state == CastMediaPlayerState.loading;
+    final d = status.mediaInformation?.duration;
+    if (d != null && d > Duration.zero) castDuration.value = d;
+    final finished = state == CastMediaPlayerState.idle &&
+        status.idleReason == GoogleCastMediaIdleReason.finished &&
+        _castEpisodeId != null &&
+        _castEpisodeId == currentEpisode.value?.id;
+    if (finished && !_castFinishHandled) {
+      _castFinishHandled = true;
+      _playNext();
+    }
+  }
+
+  Future<bool> _remote(Future<void> Function() action) async {
+    try {
+      await action();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> castPlayPause() => _remote(() => castPlaying.value
+      ? GoogleCastRemoteMediaClient.instance.pause()
+      : GoogleCastRemoteMediaClient.instance.play());
+
+  Future<void> castSeekTo(Duration position) {
+    castPosition.value = position;
+    return _remote(() => GoogleCastRemoteMediaClient.instance.seek(GoogleCastMediaSeekOption(position: position, resumeState: GoogleCastMediaResumeState.unchanged)));
+  }
+
+  Future<void> castSeekBy(int seconds) {
+    var target = castPosition.value + Duration(seconds: seconds);
+    if (target < Duration.zero) target = Duration.zero;
+    final d = castDuration.value;
+    if (d > Duration.zero && target > d) target = d;
+    return castSeekTo(target);
+  }
+
+  Future<void> stopCasting() async {
+    await _saveProgress();
+    await _cast?.disconnect();
+  }
+
   Future<void> _saveProgress() async {
     final ep = currentEpisode.value;
-    final pos = player.state.position.inSeconds;
+    final pos = (casting.value ? castPosition.value : player.state.position).inSeconds;
     if (ep?.id == null || pos <= 0) return;
     try {
       await _apiProvider.saveProgress(currentSeriesId.value, ep!.id!, pos);
@@ -438,6 +594,9 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     _completedSub?.cancel();
     _bufferingSub?.cancel();
     _stallTimer?.cancel();
+    _castConnectedWorker?.dispose();
+    _castStatusSub?.cancel();
+    _castPositionSub?.cancel();
     _saveProgress();
     player.dispose();
     super.onClose();
