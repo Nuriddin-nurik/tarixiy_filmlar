@@ -12,6 +12,7 @@ class ApiConstants {
 
   static const String subscriptionPlans = '/subscription/plans';
   static const String createPayment = '/api/payment/create';
+  static const String checkPromo = '/api/payment/promo/check';
   static const String deleteAccount = '/account/me';
   static const String fcmToken = '/account/fcm-token';
   static const String notifications = '/api/notifications/me';

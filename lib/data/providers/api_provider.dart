@@ -93,11 +93,22 @@ class ApiProvider {
     return (response.data as List).map((i) => SubscriptionPlanModel.fromJson(i)).toList();
   }
 
-  Future<PaymentOrderModel> createPaymentOrder({int? planId, int? seriesId, required int months}) async {
+  Future<PaymentOrderModel> createPaymentOrder({int? planId, int? seriesId, required int months, String? promoCode}) async {
     final response = await _dioClient.dio.post(ApiConstants.createPayment, data: {
       'subscriptionPlanId': planId,
       'seriesId': seriesId,
       'durationMonths': months,
+      'promoCode': promoCode,
+    });
+    return PaymentOrderModel.fromJson(response.data);
+  }
+
+  Future<PaymentOrderModel> checkPromoCode({int? planId, int? seriesId, required int months, required String code}) async {
+    final response = await _dioClient.dio.post(ApiConstants.checkPromo, data: {
+      'subscriptionPlanId': planId,
+      'seriesId': seriesId,
+      'durationMonths': months,
+      'promoCode': code,
     });
     return PaymentOrderModel.fromJson(response.data);
   }

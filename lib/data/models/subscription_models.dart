@@ -29,6 +29,9 @@ class SubscriptionPlanModel {
 class PaymentOrderModel {
   final int? orderId;
   final int durationMonths;
+  final int originalAmountInSom;
+  final int discountInSom;
+  final String? promoCode;
   final int baseAmountInSom;
   final int commissionInSom;
   final int amountInSom;
@@ -37,6 +40,9 @@ class PaymentOrderModel {
   PaymentOrderModel({
     this.orderId,
     required this.durationMonths,
+    this.originalAmountInSom = 0,
+    this.discountInSom = 0,
+    this.promoCode,
     required this.baseAmountInSom,
     required this.commissionInSom,
     required this.amountInSom,
@@ -48,6 +54,9 @@ class PaymentOrderModel {
     return PaymentOrderModel(
       orderId: (json['orderId'] as num?)?.toInt(),
       durationMonths: n('durationMonths'),
+      originalAmountInSom: n('originalAmountInSom'),
+      discountInSom: n('discountInSom'),
+      promoCode: json['promoCode'],
       baseAmountInSom: n('baseAmountInSom'),
       commissionInSom: n('commissionInSom'),
       amountInSom: n('amountInSom'),
