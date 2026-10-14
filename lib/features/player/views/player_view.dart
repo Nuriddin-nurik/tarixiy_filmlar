@@ -393,6 +393,28 @@ class PlayerView extends GetView<PlayerController> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (controller.castAvailable) ...[
+            InkWell(
+              onTap: () {
+                Get.back();
+                showCastSheet(controller);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Row(
+                  children: [
+                    const Icon(Icons.cast_rounded, color: AppColors.playerAccentText, size: 22),
+                    const SizedBox(width: 14),
+                    Expanded(child: Text('Televizorga uzatish'.tr, style: st(14, FontWeight.w500, Colors.white))),
+                    const Icon(Icons.chevron_right_rounded, color: _muted, size: 22),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Divider(height: 1, color: Colors.white.withValues(alpha: 0.08)),
+            const SizedBox(height: 12),
+          ],
           Text('Video sifati'.tr, style: st(15, FontWeight.w700, AppColors.gold)),
           const SizedBox(height: 6),
           if (qualities.isEmpty)

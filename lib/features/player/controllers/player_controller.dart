@@ -8,7 +8,6 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 
 import '../../../data/models/episode_model.dart';
 import '../../../data/providers/api_provider.dart';
@@ -280,7 +279,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   Future<void> setSpeed(double value) async {
     speed.value = value;
     if (casting.value) {
-      await _remote(() => GoogleCastRemoteMediaClient.instance.setPlaybackRate(value));
+      await _remote(() => CastService.to.setRate(value));
       return;
     }
     await player.setRate(value);
@@ -434,22 +433,22 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   }
 
   final casting = false.obs;
-  final castPlaying = false.obs;
-  final castBuffering = false.obs;
-  final castPosition = Duration.zero.obs;
-  final castDuration = Duration.zero.obs;
 
   String? _localUrl;
   bool _localOpened = false;
   int? _castEpisodeId;
   bool _castFinishHandled = false;
   Worker? _castConnectedWorker;
-  StreamSubscription<GoggleCastMediaStatus?>? _castStatusSub;
-  StreamSubscription<Duration>? _castPositionSub;
+  StreamSubscription<void>? _castFinishedSub;
 
   CastService? get _cast => Get.isRegistered<CastService>() ? CastService.to : null;
 
   bool get castAvailable => _cast?.available.value ?? false;
+
+  RxBool get castPlaying => CastService.to.playing;
+  RxBool get castBuffering => CastService.to.buffering;
+  Rx<Duration> get castPosition => CastService.to.position;
+  Rx<Duration> get castDuration => CastService.to.duration;
 
   bool get canCast {
     final ep = currentEpisode.value;
@@ -460,9 +459,12 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     final cast = _cast;
     if (cast == null || !cast.available.value) return;
     _castConnectedWorker = ever<bool>(cast.connected, _onCastConnection);
-    _castStatusSub = GoogleCastRemoteMediaClient.instance.mediaStatusStream.listen(_onCastStatus);
-    _castPositionSub = GoogleCastRemoteMediaClient.instance.playerPositionStream.listen((p) {
-      if (casting.value) castPosition.value = p;
+    _castFinishedSub = cast.finished.listen((_) {
+      final finished = casting.value && _castEpisodeId != null && _castEpisodeId == currentEpisode.value?.id;
+      if (finished && !_castFinishHandled) {
+        _castFinishHandled = true;
+        _playNext();
+      }
     });
     if (cast.connected.value) casting.value = true;
   }
@@ -495,51 +497,31 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> _castEpisode(EpisodeModel ep, Duration at) async {
-    if (!canCast) return;
+    final cast = _cast;
+    if (!canCast || cast == null) return;
     await player.pause();
     _castEpisodeId = ep.id;
     _castFinishHandled = false;
-    castPosition.value = at;
-    castDuration.value = Duration(seconds: ep.durationSeconds ?? 0);
     final subtitle = [
       '@s-FASL • @e-QISM'.trParams({'s': '${ep.seasonNumber ?? 1}', 'e': '${ep.episodeNumber ?? ''}'}),
       if (ep.title != null && seriesTitle.value.isNotEmpty) ep.title!,
     ].join('  ');
     final thumb = ep.thumbnail;
-    final ok = await _remote(() => GoogleCastRemoteMediaClient.instance.loadMedia(
-          GoogleCastMediaInformation(
-            contentId: '${ep.id}',
-            contentUrl: Uri.parse(ep.videoUrl!),
-            contentType: 'application/x-mpegURL',
-            streamType: CastMediaStreamType.buffered,
-            metadata: GoogleCastGenericMediaMetadata(
-              title: seriesTitle.value.isNotEmpty ? seriesTitle.value : (ep.title ?? ''),
-              subtitle: subtitle,
-              images: thumb != null && thumb.startsWith('http') ? [GoogleCastImage(url: Uri.parse(thumb))] : null,
-            ),
+    final local = _localUrl;
+    final url = cast.isDlna && local != null && local.startsWith('http') ? local : ep.videoUrl!;
+    final ok = await _remote(() => cast.load(
+          CastMedia(
+            id: '${ep.id}',
+            url: url,
+            title: seriesTitle.value.isNotEmpty ? seriesTitle.value : (ep.title ?? ''),
+            subtitle: subtitle,
+            thumbnail: thumb != null && thumb.startsWith('http') ? thumb : null,
+            duration: Duration(seconds: ep.durationSeconds ?? 0),
           ),
-          autoPlay: true,
-          playPosition: at,
-          playbackRate: speed.value,
+          at: at,
+          rate: speed.value,
         ));
     if (!ok) appSnack('Xato'.tr, "Televizorga uzatib bo'lmadi".tr);
-  }
-
-  void _onCastStatus(GoggleCastMediaStatus? status) {
-    if (!casting.value || status == null) return;
-    final state = status.playerState;
-    castPlaying.value = state == CastMediaPlayerState.playing;
-    castBuffering.value = state == CastMediaPlayerState.buffering || state == CastMediaPlayerState.loading;
-    final d = status.mediaInformation?.duration;
-    if (d != null && d > Duration.zero) castDuration.value = d;
-    final finished = state == CastMediaPlayerState.idle &&
-        status.idleReason == GoogleCastMediaIdleReason.finished &&
-        _castEpisodeId != null &&
-        _castEpisodeId == currentEpisode.value?.id;
-    if (finished && !_castFinishHandled) {
-      _castFinishHandled = true;
-      _playNext();
-    }
   }
 
   Future<bool> _remote(Future<void> Function() action) async {
@@ -551,14 +533,9 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  Future<void> castPlayPause() => _remote(() => castPlaying.value
-      ? GoogleCastRemoteMediaClient.instance.pause()
-      : GoogleCastRemoteMediaClient.instance.play());
+  Future<void> castPlayPause() => _remote(() => castPlaying.value ? CastService.to.pause() : CastService.to.play());
 
-  Future<void> castSeekTo(Duration position) {
-    castPosition.value = position;
-    return _remote(() => GoogleCastRemoteMediaClient.instance.seek(GoogleCastMediaSeekOption(position: position, resumeState: GoogleCastMediaResumeState.unchanged)));
-  }
+  Future<void> castSeekTo(Duration position) => _remote(() => CastService.to.seek(position));
 
   Future<void> castSeekBy(int seconds) {
     var target = castPosition.value + Duration(seconds: seconds);
@@ -595,8 +572,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     _bufferingSub?.cancel();
     _stallTimer?.cancel();
     _castConnectedWorker?.dispose();
-    _castStatusSub?.cancel();
-    _castPositionSub?.cancel();
+    _castFinishedSub?.cancel();
     _saveProgress();
     player.dispose();
     super.onClose();

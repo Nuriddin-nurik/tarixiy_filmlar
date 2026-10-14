@@ -83,37 +83,50 @@ void showCastSheet(PlayerController controller) {
                 ),
               ),
             ),
-          ] else if (devices.isEmpty) ...[
-            const SizedBox(height: 12),
-            const Center(
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.playerAccent),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                "Qurilmalar qidirilmoqda... Telefon va televizor bitta Wi-Fi tarmog'iga ulangan bo'lishi kerak".tr,
-                textAlign: TextAlign.center,
-                style: _st(12, FontWeight.w400, _muted),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ] else
+          ] else ...[
             for (final d in devices)
               deviceTile(
-                Icons.tv_rounded,
-                d.friendlyName,
-                subtitle: d.modelName,
+                d.google != null ? Icons.cast_rounded : Icons.tv_rounded,
+                d.name,
+                subtitle: d.subtitle,
                 onTap: () async {
                   Get.back();
                   final ok = await cast.connect(d);
                   if (!ok) appSnack('Xato'.tr, "Qurilmaga ulanib bo'lmadi".tr);
                 },
               ),
+            if (devices.isEmpty || cast.searching.value) ...[
+              const SizedBox(height: 12),
+              const Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.playerAccent),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  "Qurilmalar qidirilmoqda... Telefon va televizor bitta Wi-Fi tarmog'iga ulangan bo'lishi kerak".tr,
+                  textAlign: TextAlign.center,
+                  style: _st(12, FontWeight.w400, _muted),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ] else
+              Center(
+                child: TextButton.icon(
+                  onPressed: cast.startDiscovery,
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: Text('Qayta qidirish'.tr),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.playerAccentText,
+                    textStyle: _st(12, FontWeight.w600, AppColors.playerAccentText),
+                  ),
+                ),
+              ),
+          ],
           const SizedBox(height: 4),
         ],
       ),

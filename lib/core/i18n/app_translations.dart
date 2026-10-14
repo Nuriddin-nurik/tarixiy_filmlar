@@ -103,6 +103,7 @@ const Map<String, String> _ru = {
   "Qurilmalar qidirilmoqda... Telefon va televizor bitta Wi-Fi tarmog'iga ulangan bo'lishi kerak":
       "Поиск устройств... Телефон и телевизор должны быть подключены к одной сети Wi-Fi",
   "Televizorda ijro etilmoqda": "Воспроизводится на телевизоре",
+  "Qayta qidirish": "Искать снова",
   "Bu video uchun sifat tanlab bo'lmaydi": "Для этого видео нельзя выбрать качество",
   "Avto": "Авто",
   "Internet sekin": "Медленный интернет",
