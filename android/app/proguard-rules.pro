@@ -1,0 +1,2 @@
+-keep class com.example.tarixiy_filimlar.CastOptionsProvider { *; }
+-keep class com.felnanuke.google_cast.GoogleCastOptionsProvider { *; }
