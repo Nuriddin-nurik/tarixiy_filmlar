@@ -12,9 +12,14 @@ import '../../../core/widgets/app_widgets.dart';
 class AuthController extends GetxController {
   static const _serverClientId =
       '428242414058-voehuh35ufk65lu8t8cuqbrn57h042vk.apps.googleusercontent.com';
+  static const _iosClientId =
+      '428242414058-apqe487egpu74uspvrdbmecp4t2pclu5.apps.googleusercontent.com';
 
-  Future<GoogleSignInAccount?> _signInAccount() =>
-      GoogleSignIn(scopes: const ['email', 'profile'], serverClientId: _serverClientId).signIn();
+  Future<GoogleSignInAccount?> _signInAccount() => GoogleSignIn(
+        scopes: const ['email', 'profile'],
+        clientId: GetPlatform.isIOS ? _iosClientId : null,
+        serverClientId: _serverClientId,
+      ).signIn();
 
   var isLoading = false.obs;
 
