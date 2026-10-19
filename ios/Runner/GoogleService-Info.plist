@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>133441254783-lsf67rkrpn4qdrm0ru935g52djf658me.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.133441254783-lsf67rkrpn4qdrm0ru935g52djf658me</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>133441254783-ibqhmkaecf8oafmk6iuiss77j9s93767.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCevTh-x57U6CLUMN8ShTQ8o4S3bRRQuOk</string>
+	<key>GCM_SENDER_ID</key>
+	<string>133441254783</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.nuriddin.tarixiyFilmlar</string>
+	<key>PROJECT_ID</key>
+	<string>tarixiy-kinolar-6c55f</string>
+	<key>STORAGE_BUCKET</key>
+	<string>tarixiy-kinolar-6c55f.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:133441254783:ios:66e463ec9b22c7bd54164a</string>
+</dict>
+</plist>
