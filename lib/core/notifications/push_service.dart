@@ -40,7 +40,14 @@ class PushService {
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
     await _local.initialize(
-      const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')),
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        ),
+      ),
       onDidReceiveNotificationResponse: (r) => _openFromPush(r.payload),
     );
 
@@ -54,6 +61,7 @@ class PushService {
           const NotificationDetails(
             android: AndroidNotificationDetails(channelId, 'Tarixiy Kinolar',
                 importance: Importance.high, priority: Priority.high),
+            iOS: DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
           ),
           payload: m.data['seriesId'],
         );
@@ -77,6 +85,7 @@ class PushService {
     if (!_ready) return;
     try {
       await FirebaseMessaging.instance.requestPermission();
+      if (GetPlatform.isIOS) await FirebaseMessaging.instance.getAPNSToken();
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) await _sendToken(token);
     } catch (e) {

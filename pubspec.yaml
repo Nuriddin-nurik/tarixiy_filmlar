@@ -49,6 +49,7 @@ dependencies:
   flutter_svg: ^2.3.0
   flutter_chrome_cast: ^2.0.0
   in_app_update: ^5.0.0
+  package_info_plus: ^10.2.2
 
 
 
