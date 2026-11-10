@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/release_date.dart';
 import '../../../core/widgets/app_widgets.dart';
 import '../../../data/models/series_details_model.dart';
 import '../../subscription/widgets/purchase_sheet.dart';
@@ -29,6 +30,82 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
     });
   }
 
+  void _showUpcomingSheet(EpisodePartModel part) {
+    Get.bottomSheet(
+      SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
+          child: Obx(() {
+            final on = controller.remindedEpisodes.contains(part.episodeId);
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2.r)),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        AppNetworkImage(part.thumbnail),
+                        Container(color: Colors.black.withValues(alpha: 0.45)),
+                        Positioned(
+                          left: 12.w,
+                          top: 12.h,
+                          child: _ReleaseBadge(at: part.publishAt!),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 14.h),
+                Text(
+                  part.title ?? '@n-qism'.trParams({'n': '${part.episodeNumber}'}),
+                  style: _t(16, FontWeight.w700, Colors.white),
+                ),
+                SizedBox(height: 6.h),
+                Row(
+                  children: [
+                    Icon(Icons.schedule_rounded, color: AppColors.seriesGold, size: 16.sp),
+                    SizedBox(width: 6.w),
+                    Expanded(
+                      child: Text(formatReleaseDate(part.publishAt!),
+                          style: _t(13, FontWeight.w600, AppColors.seriesGold)),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4.h),
+                Text(formatReleaseLeft(part.publishAt!), style: _t(12, FontWeight.w400, AppColors.textSecondary)),
+                SizedBox(height: 18.h),
+                _ReminderPill(active: on, onTap: () => controller.toggleEpisodeReminder(part), expanded: true),
+                SizedBox(height: 8.h),
+                Text(
+                  on
+                      ? 'Qism chiqishi bilan bildirishnoma olasiz'.tr
+                      : 'Bosing — qism chiqqanda sizga bildirishnoma yuboramiz'.tr,
+                  textAlign: TextAlign.center,
+                  style: _t(11, FontWeight.w400, AppColors.textSecondary),
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
+    );
+  }
+
   TextStyle _t(double size, FontWeight w, Color c, {double? height, double? spacing}) => TextStyle(
         fontFamily: _font,
         fontSize: size.sp,
@@ -47,7 +124,8 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
       backgroundColor: AppColors.seriesBg,
       body: Obx(() {
         final details = controller.details.value;
-        final parts = details?.parts ?? const <EpisodePartModel>[];
+        final parts = details?.releasedParts ?? const <EpisodePartModel>[];
+        final upcoming = details?.upcomingParts ?? const <EpisodePartModel>[];
         final hasAccess = details?.hasAccess ?? false;
         final tgUrl = details?.telegramFreeUrl ?? series.telegramFreeUrl;
         final tgCount = details?.telegramFreeCount ?? series.telegramFreeCount ?? 0;
@@ -105,6 +183,15 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                             label: 'Tomosha qilish'.tr,
                             onTap: () => _openPlayer(episodeId: controller.resumeEpisodeId),
                           ),
+                        if (!series.isComingSoon && upcoming.isNotEmpty) ...[
+                          SizedBox(height: 12.h),
+                          _NextEpisodeCard(
+                            part: upcoming.first,
+                            reminded: controller.remindedEpisodes.contains(upcoming.first.episodeId),
+                            onRemind: () => controller.toggleEpisodeReminder(upcoming.first),
+                            onTap: () => _showUpcomingSheet(upcoming.first),
+                          ),
+                        ],
                         SizedBox(height: 12.h),
 
                         Row(
@@ -158,14 +245,14 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                     padding: EdgeInsets.all(24.w),
                     child: const Center(child: CircularProgressIndicator(color: _green)),
                   )
-                else if (parts.isEmpty)
+                else if (parts.isEmpty && upcoming.isEmpty)
                   Padding(
                     padding: EdgeInsets.all(24.w),
                     child: Text("Hozircha qismlar yo'q".tr,
                         textAlign: TextAlign.center, style: _t(13, FontWeight.w400, AppColors.textSecondary)),
                   )
                 else ...[
-                  if (tgUrl != null)
+                  if (tgUrl != null && parts.isNotEmpty)
                     _TelegramEpisodeTile(
                       count: tgCount,
                       firstEpisode: parts.map((p) => p.episodeNumber ?? 0).reduce((a, b) => a < b ? a : b),
@@ -176,6 +263,12 @@ class SeriesDetailView extends GetView<SeriesDetailController> {
                         onTap: () => !p.hasAccess && !p.free
                             ? showUnlockSheet(series, controller.plans)
                             : _openPlayer(episodeId: p.episodeId),
+                      )),
+                  ...upcoming.map((p) => _UpcomingEpisodeTile(
+                        part: p,
+                        reminded: controller.remindedEpisodes.contains(p.episodeId),
+                        onRemind: () => controller.toggleEpisodeReminder(p),
+                        onTap: () => _showUpcomingSheet(p),
                       )),
                 ],
               ],
@@ -732,6 +825,189 @@ class _EpisodeTile extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReleaseBadge extends StatelessWidget {
+  const _ReleaseBadge({required this.at});
+  final DateTime at;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4.r)),
+      child: Text(
+        formatReleaseShort(at),
+        style: TextStyle(fontFamily: AppFonts.jakarta, color: Colors.black, fontSize: 11.sp, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
+class _ReminderPill extends StatelessWidget {
+  const _ReminderPill({required this.active, required this.onTap, this.expanded = false});
+  final bool active;
+  final VoidCallback onTap;
+  final bool expanded;
+
+  @override
+  Widget build(BuildContext context) {
+    const gold = AppColors.seriesGold;
+    return SizedBox(
+      height: expanded ? 48.h : 36.h,
+      child: Material(
+        color: active ? Colors.transparent : Colors.white,
+        shape: StadiumBorder(side: active ? const BorderSide(color: gold, width: 1.5) : BorderSide.none),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 14.w),
+            child: Row(
+              mainAxisSize: expanded ? MainAxisSize.max : MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(active ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+                    color: active ? gold : Colors.black, size: expanded ? 20.sp : 16.sp),
+                SizedBox(width: 6.w),
+                Text(
+                  active ? 'Eslatma yoqilgan'.tr : 'Eslatish'.tr,
+                  style: TextStyle(
+                    fontFamily: AppFonts.jakarta,
+                    color: active ? gold : Colors.black,
+                    fontSize: expanded ? 14.sp : 12.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NextEpisodeCard extends StatelessWidget {
+  const _NextEpisodeCard({required this.part, required this.reminded, required this.onRemind, required this.onTap});
+  final EpisodePartModel part;
+  final bool reminded;
+  final VoidCallback onRemind;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surfaceLight,
+      borderRadius: BorderRadius.circular(12.r),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.all(12.w),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        _ReleaseBadge(at: part.publishAt!),
+                        SizedBox(width: 8.w),
+                        Flexible(
+                          child: Text(
+                            'Keyingi qism'.tr,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontFamily: AppFonts.jakarta, color: AppColors.seriesGold, fontSize: 11.sp, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6.h),
+                    Text(
+                      part.title ?? '@n-qism'.trParams({'n': '${part.episodeNumber}'}),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontFamily: AppFonts.jakarta, color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 10.w),
+              _ReminderPill(active: reminded, onTap: onRemind),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UpcomingEpisodeTile extends StatelessWidget {
+  const _UpcomingEpisodeTile({required this.part, required this.reminded, required this.onRemind, required this.onTap});
+  final EpisodePartModel part;
+  final bool reminded;
+  final VoidCallback onRemind;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.r),
+              child: SizedBox(
+                width: 120.w,
+                height: 68.h,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    AppNetworkImage(part.thumbnail),
+                    Container(color: Colors.black.withValues(alpha: 0.55)),
+                    Center(child: Icon(Icons.schedule_rounded, color: Colors.white.withValues(alpha: 0.9), size: 26.sp)),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    part.title ?? '@n-qism'.trParams({'n': '${part.episodeNumber}'}),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontFamily: AppFonts.jakarta, color: Colors.white70, fontSize: 13.sp, fontWeight: FontWeight.w600),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    '${'Tez kunda'.tr} • ${formatReleaseShort(part.publishAt!)}',
+                    style: TextStyle(fontFamily: AppFonts.jakarta, color: AppColors.seriesGold, fontSize: 11.sp),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: onRemind,
+              icon: Icon(
+                reminded ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+                color: reminded ? AppColors.seriesGold : Colors.white70,
+                size: 22.sp,
               ),
             ),
           ],

@@ -17,6 +17,7 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
   var liked = false.obs;
   var likeCount = 0.obs;
   var reminded = false.obs;
+  final remindedEpisodes = <int>{}.obs;
   var plans = <SubscriptionPlanModel>[].obs;
   late final CommentsController comments;
 
@@ -58,6 +59,9 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
       liked.value = d.liked;
       likeCount.value = d.likeCount;
       reminded.value = d.reminded;
+      remindedEpisodes
+        ..clear()
+        ..addAll(d.parts.where((p) => p.reminded && p.episodeId != null).map((p) => p.episodeId!));
       if (silent && !hadAccess && d.hasAccess) {
         appSnack("To'lov qabul qilindi".tr, 'Barcha qismlar ochildi. Yoqimli tomosha!'.tr);
       }
@@ -82,6 +86,23 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
     }
   }
 
+  Future<void> toggleEpisodeReminder(EpisodePartModel part) async {
+    final id = part.episodeId;
+    if (id == null) return;
+    final wasOn = remindedEpisodes.contains(id);
+    wasOn ? remindedEpisodes.remove(id) : remindedEpisodes.add(id);
+    try {
+      final on = await _apiProvider.toggleEpisodeReminder(series.id!, id);
+      on ? remindedEpisodes.add(id) : remindedEpisodes.remove(id);
+      if (on) {
+        appSnack('Eslatma yoqildi'.tr, 'Qism chiqishi bilan sizga xabar beramiz'.tr);
+      }
+    } catch (_) {
+      wasOn ? remindedEpisodes.add(id) : remindedEpisodes.remove(id);
+      appSnack('Xato'.tr, "Eslatmani yoqib bo'lmadi".tr);
+    }
+  }
+
   Future<void> toggleLike() async {
     liked.toggle();
     likeCount.value += liked.value ? 1 : -1;
@@ -96,7 +117,7 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
   }
 
   int? get resumeEpisodeId {
-    final parts = [...?details.value?.parts]
+    final parts = [...?details.value?.releasedParts]
       ..sort((a, b) {
         final s = (a.seasonNumber ?? 1).compareTo(b.seasonNumber ?? 1);
         return s != 0 ? s : (a.episodeNumber ?? 0).compareTo(b.episodeNumber ?? 0);

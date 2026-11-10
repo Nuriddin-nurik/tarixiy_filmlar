@@ -41,12 +41,20 @@ class ApiProvider {
   }
 
   Future<SeriesDetailsModel> getSeriesDetails(int seriesId) async {
-    final response = await _dioClient.dio.get(ApiConstants.seriesDetails(seriesId));
+    final response = await _dioClient.dio.get(
+      ApiConstants.seriesDetails(seriesId),
+      queryParameters: {'includeScheduled': true},
+    );
     return SeriesDetailsModel.fromJson(response.data);
   }
 
   Future<bool> toggleReminder(int seriesId) async {
     final response = await _dioClient.dio.post(ApiConstants.toggleReminder(seriesId));
+    return (response.data as Map<String, dynamic>)['reminded'] as bool? ?? false;
+  }
+
+  Future<bool> toggleEpisodeReminder(int seriesId, int episodeId) async {
+    final response = await _dioClient.dio.post(ApiConstants.toggleEpisodeReminder(seriesId, episodeId));
     return (response.data as Map<String, dynamic>)['reminded'] as bool? ?? false;
   }
 

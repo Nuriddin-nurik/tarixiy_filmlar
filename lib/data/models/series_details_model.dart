@@ -8,6 +8,9 @@ class EpisodePartModel {
   final int? seasonNumber;
   final int watchedSeconds;
   final int durationSeconds;
+  final bool scheduled;
+  final DateTime? publishAt;
+  final bool reminded;
 
   EpisodePartModel({
     this.episodeId,
@@ -19,6 +22,9 @@ class EpisodePartModel {
     this.seasonNumber,
     this.watchedSeconds = 0,
     this.durationSeconds = 0,
+    this.scheduled = false,
+    this.publishAt,
+    this.reminded = false,
   });
 
   factory EpisodePartModel.fromJson(Map<String, dynamic> json) {
@@ -32,8 +38,13 @@ class EpisodePartModel {
       seasonNumber: json['seasonNumber'],
       watchedSeconds: json['watchedSeconds'] ?? 0,
       durationSeconds: json['durationSeconds'] ?? 0,
+      scheduled: json['scheduled'] ?? false,
+      publishAt: DateTime.tryParse(json['publishAt'] as String? ?? '')?.toLocal(),
+      reminded: json['reminded'] ?? false,
     );
   }
+
+  bool get isUpcoming => scheduled && publishAt != null && publishAt!.isAfter(DateTime.now());
 }
 
 class SeriesDetailsModel {
@@ -81,5 +92,10 @@ class SeriesDetailsModel {
     );
   }
 
-  int get seasonCount => parts.map((p) => p.seasonNumber ?? 1).toSet().length;
+  List<EpisodePartModel> get releasedParts => parts.where((p) => !p.isUpcoming).toList();
+
+  List<EpisodePartModel> get upcomingParts =>
+      parts.where((p) => p.isUpcoming).toList()..sort((a, b) => a.publishAt!.compareTo(b.publishAt!));
+
+  int get seasonCount => releasedParts.map((p) => p.seasonNumber ?? 1).toSet().length;
 }
