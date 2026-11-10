@@ -127,6 +127,7 @@ const Map<String, String> _ru = {
   "Premium obuna": "Премиум подписка",
   "Barcha seriallarni cheklovsiz ko'ring": "Смотрите все сериалы без ограничений",
   "Obuna tarifidagi barcha seriallarni cheklovsiz ko'ring": "Смотрите все сериалы тарифа без ограничений",
+  "Obunadagi seriallarni cheklovsiz ko'ring": "Смотрите сериалы из подписки без ограничений",
   "Ulanish": "Подключить",
   "Obuna bo'lish": "Оформить подписку",
   "1 oylik": "1 месяц",

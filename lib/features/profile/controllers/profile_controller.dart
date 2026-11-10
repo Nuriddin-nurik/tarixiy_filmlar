@@ -17,6 +17,7 @@ class ProfileController extends GetxController with WidgetsBindingObserver {
   var isLoggingOut = false.obs;
   var isDeleting = false.obs;
   var subscription = Rxn<MySubscriptionModel>();
+  var hasActivePlans = false.obs;
 
   UserModel? get user => Get.find<HomeController>().homeData.value?.user;
 
@@ -41,6 +42,10 @@ class ProfileController extends GetxController with WidgetsBindingObserver {
   Future<void> loadSubscription() async {
     try {
       subscription.value = await _apiProvider.getMySubscription();
+    } catch (_) {
+    }
+    try {
+      hasActivePlans.value = (await _apiProvider.getSubscriptionPlans()).isNotEmpty;
     } catch (_) {
     }
   }

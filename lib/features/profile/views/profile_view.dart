@@ -150,8 +150,7 @@ class ProfileView extends GetView<ProfileController> {
                     ),
                     SizedBox(height: 32.h),
 
-                    ..._subscriptionSection(controller.subscription.value),
-                    SizedBox(height: 32.h),
+                    ..._subscriptionSection(controller.subscription.value, controller.hasActivePlans.value),
 
                     _menu([
                       _item('menu_user', "Hisob ma'lumotlari".tr, () => Get.toNamed(Routes.ACCOUNT)),
@@ -212,8 +211,9 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  List<Widget> _subscriptionSection(MySubscriptionModel? sub) {
+  List<Widget> _subscriptionSection(MySubscriptionModel? sub, bool hasActivePlans) {
     final active = sub?.active ?? false;
+    final showCard = active || hasActivePlans;
     String date(DateTime d) =>
         '${d.day.toString().padLeft(2, '0')}.${d.month.toString().padLeft(2, '0')}.${d.year}';
 
@@ -247,7 +247,7 @@ class ProfileView extends GetView<ProfileController> {
                 Text(
                   active && sub!.endDate != null
                       ? '@kun kun qoldi • @sana gacha'.trParams({'kun': '${sub.daysLeft}', 'sana': date(sub.endDate!)})
-                      : "Barcha seriallarni cheklovsiz ko'ring".tr,
+                      : "Obunadagi seriallarni cheklovsiz ko'ring".tr,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: _soft, fontSize: 12.sp, height: 16 / 12),
@@ -274,10 +274,11 @@ class ProfileView extends GetView<ProfileController> {
     );
 
     final purchased = sub?.series ?? const <SeriesAccessModel>[];
+    if (!showCard && purchased.isEmpty) return const [];
     return [
-      card,
+      if (showCard) card,
       if (purchased.isNotEmpty) ...[
-        SizedBox(height: 24.h),
+        if (showCard) SizedBox(height: 24.h),
         Text('SOTIB OLINGAN SERIALLAR'.tr,
             style: TextStyle(color: _soft, fontSize: 14.sp, fontWeight: FontWeight.w600, letterSpacing: 0.7, height: 20 / 14)),
         SizedBox(height: 8.h),
@@ -318,6 +319,7 @@ class ProfileView extends GetView<ProfileController> {
             ),
         ]),
       ],
+      SizedBox(height: 32.h),
     ];
   }
 
