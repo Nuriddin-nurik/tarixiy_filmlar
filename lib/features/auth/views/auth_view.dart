@@ -84,7 +84,9 @@ class AuthView extends GetView<AuthController> {
                           ),
                           clipBehavior: Clip.antiAlias,
                           child: InkWell(
-                            onTap: controller.isLoading.value ? null : controller.signInWithGoogle,
+                            onTap: controller.isLoading.value || controller.isTelegramLoading.value
+                                ? null
+                                : controller.signInWithGoogle,
                             child: SizedBox(
                               height: 48.h,
                               width: double.infinity,
@@ -102,6 +104,54 @@ class AuthView extends GetView<AuthController> {
                                   SizedBox(width: 12.w),
                                   Text(
                                     'Google orqali davom etish'.tr,
+                                    style: TextStyle(
+                                      fontFamily: _jakarta,
+                                      color: const Color(0xFFF1F5F9),
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w500,
+                                      height: 20 / 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        )),
+
+                    SizedBox(height: 12.h),
+
+                    Obx(() => Material(
+                          color: const Color(0xFF161B24).withValues(alpha: 0.9),
+                          shape: RoundedRectangleBorder(
+                            side: BorderSide(color: const Color(0xFF334155).withValues(alpha: 0.8)),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: controller.isLoading.value
+                                ? null
+                                : controller.isTelegramLoading.value
+                                    ? controller.cancelTelegram
+                                    : controller.signInWithTelegram,
+                            child: SizedBox(
+                              height: 48.h,
+                              width: double.infinity,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (controller.isTelegramLoading.value)
+                                    SizedBox(
+                                      width: 16.w,
+                                      height: 16.w,
+                                      child: const CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF229ED9)),
+                                    )
+                                  else
+                                    AppIcon('telegram', size: 16.w),
+                                  SizedBox(width: 12.w),
+                                  Text(
+                                    controller.isTelegramLoading.value
+                                        ? 'Kutilmoqda... (bekor qilish)'.tr
+                                        : 'Telegram orqali davom etish'.tr,
                                     style: TextStyle(
                                       fontFamily: _jakarta,
                                       color: const Color(0xFFF1F5F9),

@@ -4,6 +4,11 @@ class ApiConstants {
   static const String signIn = '/auth/sign-in';
   static const String logout = '/auth/logout';
   static const String refresh = '/auth/refresh';
+  static const String telegramStart = '/auth/telegram/start';
+  static const String telegramCheck = '/auth/telegram/check';
+  static const String telegramLinkStart = '/account/telegram/link/start';
+  static const String telegramLinkCheck = '/account/telegram/link/check';
+  static const String googleLink = '/account/google/link';
   static const String home = '/home';
   static const String seriesAll = '/series/all';
   static const String seriesLiked = '/series/liked';

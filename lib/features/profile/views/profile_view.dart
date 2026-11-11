@@ -117,8 +117,8 @@ class ProfileView extends GetView<ProfileController> {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                       color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.w700, height: 28 / 18)),
-                              if (user?.email != null)
-                                Text(user!.email!,
+                              if (user?.displayContact != null)
+                                Text(user!.displayContact!,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(color: _soft, fontSize: 14.sp, height: 20 / 14)),
