@@ -9,6 +9,7 @@ class ApiConstants {
   static const String telegramLinkStart = '/account/telegram/link/start';
   static const String telegramLinkCheck = '/account/telegram/link/check';
   static const String googleLink = '/account/google/link';
+  static const String telegramSync = '/account/telegram/sync';
   static const String home = '/home';
   static const String seriesAll = '/series/all';
   static const String seriesLiked = '/series/liked';

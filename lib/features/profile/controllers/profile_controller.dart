@@ -34,6 +34,7 @@ class ProfileController extends GetxController with WidgetsBindingObserver {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
     loadSubscription();
+    syncBotSubscriptions();
   }
 
   @override
@@ -45,7 +46,43 @@ class ProfileController extends GetxController with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) loadSubscription();
+    if (state == AppLifecycleState.resumed) {
+      loadSubscription();
+      syncBotSubscriptions();
+    }
+  }
+
+  var isSyncingBot = false.obs;
+
+  Future<void> syncBotSubscriptions({bool manual = false}) async {
+    if (isSyncingBot.value || user?.telegramChatId == null) return;
+    isSyncingBot(true);
+    try {
+      final res = await _dio.post(
+        ApiConstants.telegramSync,
+        options: Options(validateStatus: (s) => s != null && s < 500),
+      );
+      final data = res.data;
+      final added = data is Map ? ((data['added'] ?? 0) as num).toInt() + ((data['applied'] ?? 0) as num).toInt() : 0;
+      if (added > 0) {
+        await Get.find<HomeController>().fetchHomeData();
+        await loadSubscription();
+      }
+      if (!manual) return;
+      if (res.statusCode != 200) {
+        appSnack('Xato'.tr, "Obunalarni yangilab bo'lmadi".tr);
+      } else if (data is Map && data['status'] == 'THROTTLED') {
+        appSnack('Yangilandi'.tr, "Birozdan keyin qayta urinib ko'ring".tr);
+      } else if (added > 0) {
+        appSnack('Tayyor'.tr, 'Botdan yangi obunalar ochildi'.tr);
+      } else {
+        appSnack('Yangilandi'.tr, "Botda yangi obuna topilmadi".tr);
+      }
+    } catch (_) {
+      if (manual) appSnack('Xato'.tr, "Obunalarni yangilab bo'lmadi".tr);
+    } finally {
+      isSyncingBot(false);
+    }
   }
 
   Future<void> loadSubscription() async {

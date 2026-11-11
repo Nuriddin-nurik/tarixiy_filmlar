@@ -57,6 +57,27 @@ class AccountView extends GetView<ProfileController> {
             onLink: controller.linkTelegram,
             onCancel: controller.cancelTelegramLink,
           ),
+          if (hasTelegram)
+            OutlinedButton.icon(
+              onPressed: controller.isSyncingBot.value
+                  ? null
+                  : () => controller.syncBotSubscriptions(manual: true),
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size.fromHeight(44.h),
+                side: BorderSide(color: AppColors.border),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+              ),
+              icon: controller.isSyncingBot.value
+                  ? SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.seriesGreen))
+                  : Icon(Icons.refresh_rounded, color: AppColors.seriesGreen, size: 18.sp),
+              label: Text(
+                'Botdagi obunalarni yangilash'.tr,
+                style: TextStyle(color: Colors.white, fontSize: 13.sp),
+              ),
+            ),
           SizedBox(height: 6.h),
           Text(
             "Ikkalasini ulasangiz, Google yoki Telegram bilan kirganda ham bitta hisobga tushasiz va botdagi obunalaringiz shu yerda ochiladi.".tr,
