@@ -492,7 +492,6 @@ class PlayerView extends GetView<PlayerController> {
     final watched = episode.watchedSeconds ?? 0;
     final total = episode.durationSeconds ?? 0;
     final progress = total > 0 ? (watched / total).clamp(0.0, 1.0) : 0.0;
-    final size = episode.fileSizeMb;
 
     return Material(
       color: AppColors.playerCard,
@@ -568,17 +567,8 @@ class PlayerView extends GetView<PlayerController> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: 4.h),
-                    Row(
-                      children: [
-                        Text('@n-qism'.trParams({'n': '${episode.episodeNumber ?? ''}'}),
-                            style: _t(11, FontWeight.w500, AppColors.playerAccentText, height: 1.5)),
-                        if (size != null && size > 0) ...[
-                          Text('  •  ', style: _t(11, FontWeight.w400, _muted)),
-                          Text(size >= 1024 ? '${(size / 1024).toStringAsFixed(1)} GB' : '${size.round()} MB',
-                              style: _t(11, FontWeight.w400, _muted, height: 1.5)),
-                        ],
-                      ],
-                    ),
+                    Text('@n-qism'.trParams({'n': '${episode.episodeNumber ?? ''}'}),
+                        style: _t(11, FontWeight.w500, AppColors.playerAccentText, height: 1.5)),
                   ],
                 ),
               ),
