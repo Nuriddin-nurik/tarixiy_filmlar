@@ -16,7 +16,8 @@ Future<void> firebaseBackgroundHandler(RemoteMessage message) async {
 }
 
 class PushService {
-  static const channelId = 'tarixiy_filmlar_notifications_v4';
+  static const channelId = 'tarixiy_filmlar_notifications_v5';
+  static const soundName = 'notification_sound';
 
   static final _local = FlutterLocalNotificationsPlugin();
   static bool _ready = false;
@@ -35,6 +36,8 @@ class PushService {
       'Tarixiy Kinolar',
       description: 'Yangi qismlar, obuna va to\'lov haqida xabarlar',
       importance: Importance.high,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound(soundName),
     );
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
@@ -60,7 +63,10 @@ class PushService {
           n.body,
           const NotificationDetails(
             android: AndroidNotificationDetails(channelId, 'Tarixiy Kinolar',
-                importance: Importance.high, priority: Priority.high),
+                importance: Importance.high,
+                priority: Priority.high,
+                playSound: true,
+                sound: RawResourceAndroidNotificationSound(soundName)),
             iOS: DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
           ),
           payload: m.data['seriesId'],
