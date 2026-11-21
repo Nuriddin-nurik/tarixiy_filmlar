@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_widgets.dart';
+import '../../../core/widgets/support_card.dart';
 import '../../../data/models/subscription_models.dart';
 import '../../../data/providers/api_provider.dart';
 import '../widgets/purchase_sheet.dart';
@@ -63,6 +64,8 @@ class _SubscriptionViewState extends State<SubscriptionView> {
               SizedBox(height: 24.h),
               ...plans.map(_planCard),
               SizedBox(height: 8.h),
+              const SupportCard(),
+              SizedBox(height: 14.h),
               Text(
                 "To'lov Pixy orqali amalga oshiriladi. Narxga 4% komissiya qo'shiladi.".tr,
                 textAlign: TextAlign.center,

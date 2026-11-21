@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_config.dart';
 import '../../../core/i18n/locale_service.dart';
@@ -12,8 +11,10 @@ import '../../../core/theme/app_colors.dart';
 import '../../home/controllers/home_controller.dart';
 import '../controllers/profile_controller.dart';
 import 'language_sheet.dart';
-import '../../../core/utils/open_series.dart';
+import 'linked_accounts_card.dart';
+import 'purchased_folder.dart';
 import '../../../core/widgets/app_widgets.dart';
+import '../../../core/widgets/support_card.dart';
 import '../../../data/models/subscription_models.dart';
 import '../../main/views/main_view.dart';
 
@@ -22,14 +23,6 @@ class ProfileView extends GetView<ProfileController> {
 
   static const _bg = Color(0xFF0B0C10);
   static const _soft = Color(0xFFC5C6C7);
-
-  Future<void> _openSupport() async {
-    final app = Uri.parse('tg://resolve?domain=${AppConfig.supportTelegram}');
-    final web = Uri.parse('https://t.me/${AppConfig.supportTelegram}');
-    if (!await launchUrl(app, mode: LaunchMode.externalApplication)) {
-      await launchUrl(web, mode: LaunchMode.externalApplication);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +141,9 @@ class ProfileView extends GetView<ProfileController> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 32.h),
+                    SizedBox(height: 28.h),
+                    LinkedAccountsCard(initial: initial),
+                    SizedBox(height: 24.h),
 
                     ..._subscriptionSection(controller.subscription.value, controller.hasActivePlans.value),
 
@@ -160,13 +155,16 @@ class ProfileView extends GetView<ProfileController> {
                     ]),
                     SizedBox(height: 32.h),
 
+                    const SupportCard(),
+                    SizedBox(height: 24.h),
+
                     Text('YORDAM'.tr,
                         style: TextStyle(
                             color: _soft, fontSize: 14.sp, fontWeight: FontWeight.w600, letterSpacing: 0.7, height: 20 / 14)),
                     SizedBox(height: 8.h),
                     _menu([
                       _item('menu_faq', 'FAQ', () => Get.toNamed(Routes.FAQ)),
-                      _item('menu_support', "Qo'llab-quvvatlash".tr, _openSupport, trailing: 'Telegram'),
+                      _item('menu_support', "Qo'llab-quvvatlash".tr, openSupport, trailing: 'Telegram'),
                     ]),
                     SizedBox(height: 48.h),
 
@@ -279,45 +277,7 @@ class ProfileView extends GetView<ProfileController> {
       if (showCard) card,
       if (purchased.isNotEmpty) ...[
         if (showCard) SizedBox(height: 24.h),
-        Text('SOTIB OLINGAN SERIALLAR'.tr,
-            style: TextStyle(color: _soft, fontSize: 14.sp, fontWeight: FontWeight.w600, letterSpacing: 0.7, height: 20 / 14)),
-        SizedBox(height: 8.h),
-        _menu([
-          for (final s in purchased)
-            InkWell(
-              onTap: () => openSeriesById(s.seriesId),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6.r),
-                      child: AppNetworkImage(s.imagePath, width: 40.w, height: 56.h),
-                    ),
-                    SizedBox(width: 16.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(s.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.w500, height: 1.5)),
-                          if (s.endDate != null)
-                            Text(
-                              '@kun kun qoldi • @sana gacha'.trParams({'kun': '${s.daysLeft}', 'sana': date(s.endDate!)}),
-                              style: TextStyle(
-                                  color: s.daysLeft <= 3 ? AppColors.danger : _soft, fontSize: 12.sp, height: 16 / 12),
-                            ),
-                        ],
-                      ),
-                    ),
-                    AppIcon('menu_chevron', size: 14.w),
-                  ],
-                ),
-              ),
-            ),
-        ]),
+        PurchasedFolder(series: purchased),
       ],
       SizedBox(height: 32.h),
     ];

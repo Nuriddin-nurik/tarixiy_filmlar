@@ -47,7 +47,10 @@ class HomeView extends GetView<HomeController> {
         final genres = controller.seriesByGenre.entries.toList();
         final all = controller.series.where((s) => !s.isComingSoon).toList();
         final soon = controller.series.where((s) => s.isComingSoon).toList();
-        void openCatalog() => Get.find<MainController>().changePage(1);
+        void openCatalog([String? genre]) {
+          controller.catalogGenre.value = genre;
+          Get.find<MainController>().changePage(1);
+        }
 
         Widget genreSection(MapEntry<String, List<SeriesModel>> e, String icon, {double top = 0}) => Padding(
               padding: EdgeInsets.only(top: top, bottom: 28.h),
@@ -58,7 +61,7 @@ class HomeView extends GetView<HomeController> {
                     title: e.key,
                     subtitle: '@n ta serial'.trParams({'n': '${e.value.length}'}),
                     icon: icon,
-                    onSeeAll: openCatalog,
+                    onSeeAll: () => openCatalog(controller.seriesByGenre.containsKey(e.key) ? e.key : null),
                   ),
                   SizedBox(height: 14.h),
                   _PosterRow(series: e.value),
@@ -134,7 +137,7 @@ class HomeView extends GetView<HomeController> {
                               itemBuilder: (_, i) => _GenreChip(
                                 name: genres[i].key,
                                 highlighted: i == 0,
-                                onTap: openCatalog,
+                                onTap: () => openCatalog(genres[i].key),
                               ),
                             ),
                           ),
@@ -182,7 +185,10 @@ class _TopBar extends StatelessWidget {
               const Spacer(),
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => Get.find<MainController>().changePage(1),
+                onTap: () {
+                  Get.find<HomeController>().catalogGenre.value = null;
+                  Get.find<MainController>().changePage(1);
+                },
                 child: Padding(padding: EdgeInsets.all(4.w), child: AppIcon('search', size: 18.w)),
               ),
               SizedBox(width: 12.w),

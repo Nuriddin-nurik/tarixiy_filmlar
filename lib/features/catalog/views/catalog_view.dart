@@ -18,7 +18,6 @@ class CatalogView extends StatefulWidget {
 class _CatalogViewState extends State<CatalogView> {
   final home = Get.find<HomeController>();
   String query = '';
-  String? genre;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +27,7 @@ class _CatalogViewState extends State<CatalogView> {
         child: Obx(() {
           final all = home.series;
           final genres = home.seriesByGenre.keys.toList();
+          final genre = home.catalogGenre.value;
           final filtered = all.where((s) {
             final matchQuery = query.isEmpty || (s.title ?? '').toLowerCase().contains(query.toLowerCase());
             final matchGenre = genre == null || s.genreNames.contains(genre);
@@ -80,8 +80,8 @@ class _CatalogViewState extends State<CatalogView> {
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     children: [
-                      _filterChip('Barchasi'.tr, genre == null, () => setState(() => genre = null)),
-                      for (final g in genres) _filterChip(g, genre == g, () => setState(() => genre = g)),
+                      _filterChip('Barchasi'.tr, genre == null, () => home.catalogGenre.value = null),
+                      for (final g in genres) _filterChip(g, genre == g, () => home.catalogGenre.value = g),
                     ],
                   ),
                 ),

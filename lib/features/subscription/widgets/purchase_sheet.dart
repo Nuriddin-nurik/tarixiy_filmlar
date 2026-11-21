@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_widgets.dart';
+import '../../../core/widgets/support_card.dart';
 import '../../../data/models/subscription_models.dart';
 import '../../../data/providers/api_provider.dart';
 
@@ -189,6 +190,8 @@ class _PurchaseSheetState extends State<_PurchaseSheet> {
               SizedBox(height: 20.h),
               _primaryButton(label: "To'lash".tr, onTap: _pay),
             ],
+            SizedBox(height: 14.h),
+            const SupportLink(),
           ],
         ),
       ),

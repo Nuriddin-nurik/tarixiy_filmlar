@@ -14,6 +14,7 @@ class HomeController extends GetxController {
   var errorMessage = ''.obs;
   var bannerIndex = 0.obs;
   var needsLogin = false.obs;
+  final catalogGenre = RxnString();
 
   List<SeriesModel> get series => homeData.value?.series ?? const [];
 
