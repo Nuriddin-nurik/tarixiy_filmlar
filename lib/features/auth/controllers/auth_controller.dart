@@ -63,7 +63,7 @@ class AuthController extends GetxController {
         appSnack('Xato'.tr, 'Kirish amalga oshmadi'.tr);
       }
     } catch (e) {
-      appSnack('Xato'.tr, 'Google orqali kirishda muammo: $e');
+      appSnack('Xato'.tr, 'Kirish amalga oshmadi'.tr);
     } finally {
       isLoading(false);
     }

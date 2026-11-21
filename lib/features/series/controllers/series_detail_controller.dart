@@ -51,7 +51,7 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
   }
 
   Future<void> fetchDetails({bool silent = false}) async {
-    final hadAccess = details.value?.hasAccess ?? false;
+    final prev = details.value;
     try {
       if (!silent) isLoading(true);
       final d = await _apiProvider.getSeriesDetails(series.id!);
@@ -62,7 +62,7 @@ class SeriesDetailController extends GetxController with WidgetsBindingObserver 
       remindedEpisodes
         ..clear()
         ..addAll(d.parts.where((p) => p.reminded && p.episodeId != null).map((p) => p.episodeId!));
-      if (silent && !hadAccess && d.hasAccess) {
+      if (silent && prev != null && !prev.hasAccess && d.hasAccess) {
         appSnack("To'lov qabul qilindi".tr, 'Barcha qismlar ochildi. Yoqimli tomosha!'.tr);
       }
     } catch (_) {

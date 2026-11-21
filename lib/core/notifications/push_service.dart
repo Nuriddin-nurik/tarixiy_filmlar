@@ -99,6 +99,15 @@ class PushService {
     }
   }
 
+  static Future<void> unregisterToken() async {
+    if (!_ready) return;
+    try {
+      await FirebaseMessaging.instance.deleteToken();
+    } catch (e) {
+      debugPrint('FCM token o\'chirilmadi: $e');
+    }
+  }
+
   static Future<void> _sendToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     if ((prefs.getString('access_token') ?? '').isEmpty) return;

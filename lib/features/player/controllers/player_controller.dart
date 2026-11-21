@@ -59,6 +59,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   var currentTabIndex = 0.obs;
 
   Timer? _progressTimer;
+  int? _playingId;
 
   List<int> get seasons =>
       (episodes.map((e) => e.seasonNumber ?? 1).toSet().toList()..sort());
@@ -206,6 +207,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
     final sw = Stopwatch()..start();
     _logFirstFrame(sw);
     _saveProgress();
+    _playingId = null;
     currentEpisode.value = episode;
     qualities.clear();
 
@@ -236,6 +238,7 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
 
     final resumeAt = fromStart ? 0 : (episode.watchedSeconds ?? 0);
     _localUrl = url;
+    _playingId = episode.id;
     if (casting.value) {
       _localOpened = false;
       await _castEpisode(episode, Duration(seconds: resumeAt > 5 ? resumeAt : 0));
@@ -553,9 +556,9 @@ class PlayerController extends GetxController with WidgetsBindingObserver {
   Future<void> _saveProgress() async {
     final ep = currentEpisode.value;
     final pos = (casting.value ? castPosition.value : player.state.position).inSeconds;
-    if (ep?.id == null || pos <= 0) return;
+    if (ep?.id == null || ep!.id != _playingId || pos <= 0) return;
     try {
-      await _apiProvider.saveProgress(currentSeriesId.value, ep!.id!, pos);
+      await _apiProvider.saveProgress(currentSeriesId.value, ep.id!, pos);
     } catch (_) {
     }
   }

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../routes/app_routes.dart';
 import '../constants/api_constants.dart';
+import '../notifications/push_service.dart';
 import '../utils/device_id.dart';
 import '../../core/widgets/app_widgets.dart';
 
@@ -98,6 +99,7 @@ class DioClient {
     if ((prefs.getString('access_token') ?? '').isEmpty) return;
     await prefs.remove('access_token');
     await prefs.remove('refresh_token');
+    PushService.unregisterToken();
     if (Get.currentRoute != Routes.AUTH) {
       Get.offAllNamed(Routes.AUTH);
       appSnack('Sessiya tugadi'.tr, 'Iltimos, qaytadan kiring'.tr);

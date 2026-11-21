@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_client.dart';
+import '../../../core/notifications/push_service.dart';
 import '../../../core/utils/device_id.dart';
 import '../../auth/controllers/auth_controller.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -129,6 +130,7 @@ class ProfileController extends GetxController with WidgetsBindingObserver {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');
     await prefs.remove('refresh_token');
+    PushService.unregisterToken();
     Get.offAllNamed(Routes.AUTH);
   }
 
